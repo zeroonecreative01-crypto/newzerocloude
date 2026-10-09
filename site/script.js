@@ -769,10 +769,10 @@
         const workTrackEl = $('#work-track');
         if (workSection && !workSection.hidden && workTrackEl && caseStudies.length) {
           const distance = () => Math.max(0, workTrackEl.scrollWidth - window.innerWidth + (parseFloat(getComputedStyle(doc.documentElement).getPropertyValue('--pad')) || 0) * 2);
-          gsap.to(workTrackEl, { x: () => -distance(), ease: 'none', scrollTrigger: { trigger: workSection, start: 'top top', end: () => '+=' + distance(), pin: '.work-pin-wrap', scrub: 0.8, invalidateOnRefresh: true, anticipatePin: 1,
+          const horizontalTween = gsap.to(workTrackEl, { x: () => -distance(), ease: 'none', scrollTrigger: { trigger: workSection, start: 'top top', end: () => '+=' + distance(), pin: '.work-pin-wrap', scrub: 0.8, invalidateOnRefresh: true, anticipatePin: 1,
             onUpdate: self => { if (workProgress) gsap.set(workProgress, { scaleX: self.progress }); } } });
           $$('.project-visual img,.project-visual video', workTrackEl).forEach(media => {
-            gsap.fromTo(media, { scale: 1.12 }, { scale: 1, ease: 'none', scrollTrigger: { trigger: media.closest('.project-card'), containerAnimation: null, start: 'left right', end: 'right left', scrub: 0.5 } });
+            gsap.fromTo(media, { scale: 1.12 }, { scale: 1, ease: 'none', scrollTrigger: { trigger: media.closest('.project-card'), containerAnimation: horizontalTween, start: 'left right', end: 'right left', scrub: 0.5 } });
           });
         }
         if (processCards.length && !mobileQuery.matches) {
