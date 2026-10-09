@@ -211,7 +211,7 @@
     });
     if (gsap && !prefersReduced.matches) {
       gsap.set(caseModal, { autoAlpha: 1 });
-      gsap.fromTo(caseModal, { clipPath: 'inset(100% 0 0 0)' }, { clipPath: 'inset(0% 0 0 0)', duration: 0.65, ease: 'power4.inOut' });
+      gsap.fromTo(caseModal, { yPercent: 8, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.65, ease: 'power4.inOut' });
       gsap.fromTo(caseMedia, { scale: 0.96, opacity: 0.6 }, { scale: 1, opacity: 1, duration: 0.7, ease: 'power3.out', delay: 0.12 });
     }
     modalOpen = true;
@@ -221,7 +221,7 @@
     if (!modalOpen || !caseModal) return;
     modalOpen = false; body.classList.remove('modal-open');
     const finish = () => { caseModal.hidden = true; caseModal.inert = true; caseModal.setAttribute('aria-hidden', 'true'); (previousFocus || workLink)?.focus?.(); };
-    if (gsap && !prefersReduced.matches) gsap.to(caseModal, { clipPath: 'inset(0 0 100% 0)', duration: 0.45, ease: 'power3.inOut', onComplete: finish });
+    if (gsap && !prefersReduced.matches) gsap.to(caseModal, { yPercent: -4, opacity: 0, duration: 0.35, ease: 'power3.inOut', onComplete: finish });
     else finish();
   }
   workTrack?.addEventListener('click', event => {
@@ -321,13 +321,14 @@
       try { splitInstances.push(new SplitType(el, { types: 'lines,words,chars', tagName: 'span' })); } catch (_) {}
     });
     const statement = $('[data-highlight-words]');
-    if (statement && !statement.dataset.splitDone) {
-      const text = statement.textContent.trim();
+    if (statement) {
+      statement.dataset.splitDone = '';
+      const words = statement.textContent.trim().split(/\s+/);
       statement.textContent = '';
-      text.split(/\s+/).forEach((word, index) => {
+      words.forEach((word, index) => {
         const span = doc.createElement('span'); span.className = 'highlight-word'; span.textContent = word;
         statement.append(span);
-        if (index < text.split(/\s+/).length - 1) statement.append(doc.createTextNode(' '));
+        if (index < words.length - 1) statement.append(doc.createTextNode(' '));
       });
       statement.dataset.splitDone = 'true';
     }
@@ -427,6 +428,8 @@
       if (item) addText($('h3', row), item.title?.[lang] || item.title?.en);
     });
     if (activeService) selectService(activeService);
+    const highlightStatement = $('[data-highlight-words]');
+    if (highlightStatement) highlightStatement.dataset.splitDone = '';
     try { localStorage.setItem('zero-one-language', lang); } catch (_) {}
     revertSplits(); splitText();
     if (ST) requestAnimationFrame(() => ST.refresh());
@@ -676,7 +679,7 @@
     const scale = 1 - particleState.morph * 0.55;
     const spread = 1 - particleState.morph;
     for (const particle of particles) {
-      const baseX = centerX + (particle.aX * width * spread) + (0 - centerX) * particleState.morph;
+      const baseX = centerX + (particle.aX * width * spread);
       const baseY = centerY + (particle.aY * height * spread) + particle.lineY * height * particleState.morph;
       let x = baseX, y = baseY;
       if (pointer.active && !mobileQuery.matches) {
@@ -765,8 +768,12 @@
             gsap.set(card, { opacity: 0, y: 34, scale: 0.985, zIndex: processCards.length - index });
             timeline.to(card, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: 'none' }, index - 1);
             if (index > 1) timeline.to(processCards[index - 1], { opacity: 0.25, scale: 0.97, duration: 0.5, ease: 'none' }, index - 1);
-            timeline.to($('.process-current'), { textContent: String(index).padStart(2, '0'), duration: 0.01, snap: { textContent: 1 } }, index - 1);
             timeline.to($('.process-progress span'), { scaleX: (index + 1) / processCards.length, duration: 0.7, ease: 'none' }, index - 1);
+          });
+          const current = $('.process-current');
+          timeline.eventCallback('onUpdate', () => {
+            const step = Math.min(processCards.length - 1, Math.floor(timeline.progress() * processCards.length));
+            if (current) current.textContent = String(step).padStart(2, '0');
           });
         }
         const zero = $('.contact-zero');
