@@ -108,7 +108,7 @@
       statsHost.hidden = false;
       stats.forEach(item => {
         const block = doc.createElement('div'); block.className = 'stat';
-        const number = doc.createElement('strong'); number.dataset.statValue = String(Number(item.value)); number.textContent = '0';
+        const number = doc.createElement('strong'); number.dataset.statValue = String(Number(item.value)); number.dataset.statPrefix = safeText(item.prefix || ''); number.dataset.statSuffix = safeText(item.suffix || ''); number.textContent = number.dataset.statPrefix + '0' + number.dataset.statSuffix;
         const label = doc.createElement('span'); label.textContent = safeText(item.label);
         block.append(number, label); statsHost.append(block);
       });
@@ -333,8 +333,6 @@
       statement.dataset.splitDone = 'true';
     }
   }
-  splitText();
-
   /* ---------- Bilingual toggle with RTL and exact restoration ---------- */
   const translationTargets = {
     '.header-note': { ar: 'شريك إبداعي مستقل<br>للمرحلة القادمة.' },
@@ -395,6 +393,7 @@
   const select = $('#contact-form select');
   const originalOptions = select ? [...select.options].map(option => option.textContent) : [];
   function setLanguage(language) {
+    revertSplits();
     const lang = language === 'ar' ? 'ar' : 'en';
     html.lang = lang; html.dir = lang === 'ar' ? 'rtl' : 'ltr';
     const toggle = $('.lang-toggle');
@@ -431,11 +430,14 @@
     const highlightStatement = $('[data-highlight-words]');
     if (highlightStatement) highlightStatement.dataset.splitDone = '';
     try { localStorage.setItem('zero-one-language', lang); } catch (_) {}
-    revertSplits(); splitText();
+    $('[data-roll]').forEach(element => { element.dataset.rollReady = ''; });
+    initTextRoll();
+    splitText();
     if (ST) requestAnimationFrame(() => ST.refresh());
   }
   $('.lang-toggle')?.addEventListener('click', () => setLanguage(html.lang === 'ar' ? 'en' : 'ar'), { signal });
   try { if (localStorage.getItem('zero-one-language') === 'ar') setLanguage('ar'); } catch (_) {}
+  if (!splitInstances.length) splitText();
 
   /* ---------- Menu: stagger, focus trap, Escape, restore focus ---------- */
   const menu = $('#menu-overlay');
@@ -497,6 +499,10 @@
   }, { signal });
 
   /* ---------- Keyboard state ---------- */
+  window.addEventListener('popstate', () => {
+    const hash = location.hash && $(location.hash) ? location.hash : '#top';
+    navigateToHash(hash, false);
+  }, { signal });
   doc.addEventListener('keydown', event => {
     if (event.key === 'Escape') {
       if (modalOpen) { event.preventDefault(); closeCase(); return; }
@@ -701,11 +707,13 @@
   }
   if (canvas && !prefersReduced.matches) {
     resizeCanvas();
-    canvas.addEventListener('pointermove', event => {
+    doc.addEventListener('pointermove', event => {
       const rect = canvas.getBoundingClientRect();
-      pointer.x = event.clientX - rect.left; pointer.y = event.clientY - rect.top; pointer.active = true;
+      const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+      pointer.active = inside && !mobileQuery.matches;
+      if (pointer.active) { pointer.x = event.clientX - rect.left; pointer.y = event.clientY - rect.top; }
     }, { passive: true, signal });
-    canvas.addEventListener('pointerleave', () => { pointer.active = false; }, { signal });
+    hero?.addEventListener('pointerleave', () => { pointer.active = false; }, { signal });
     if ('IntersectionObserver' in window) {
       const observer = new IntersectionObserver(entries => {
         canvasVisible = entries[0]?.isIntersecting ?? true;
@@ -721,6 +729,7 @@
   /* ---------- Scroll effects: only transform/opacity, contexts revert on breakpoints ---------- */
   const marqueeTrack = $('.marquee-track');
   let marqueeSkewTween = null;
+  let marqueeSkewTo = null;
   function setupMotion() {
     if (!gsap || !ST || prefersReduced.matches) {
       $$('.reveal').forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
@@ -730,7 +739,14 @@
     mm = gsap.matchMedia();
     mm.add('(min-width: 701px) and (prefers-reduced-motion: no-preference)', () => {
       const context = gsap.context(() => {
-        const heroChars = $$('#hero-title .char');
+        $('[data-stat-value]').forEach(el => {
+          const target = Number(el.dataset.statValue);
+          const counter = { value: 0 };
+          gsap.to(counter, { value: target, duration: 1.35, ease: 'power2.out', snap: { value: 1 }, scrollTrigger: { trigger: el, start: 'top 88%', once: true }, onUpdate: () => {
+            el.textContent = el.dataset.statPrefix + Math.round(counter.value).toLocaleString() + el.dataset.statSuffix;
+          } });
+        });
+        const heroChars = $('#hero-title .char');
         if (heroChars.length) gsap.from(heroChars, { yPercent: 115, opacity: 0, duration: 1.05, stagger: 0.025, ease: 'power4.out', delay: html.classList.contains('intro-pending') ? 1.2 : 0.12 });
         $$('.services-heading h2 .line,.work-intro h2 .line,.process-heading h2 .line,.contact-title .line').forEach((line, index) => {
           gsap.from(line, { yPercent: 110, opacity: 0, duration: 0.85, delay: index * 0.025, ease: 'power4.out',
@@ -745,11 +761,10 @@
         if (canvas) gsap.to(particleState, { morph: 1, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 0.7 } });
         if (marqueeTrack) {
           gsap.to(marqueeTrack, { xPercent: -25, ease: 'none', scrollTrigger: { trigger: '.marquee-section', start: 'top bottom', end: 'bottom top', scrub: 0.7 } });
+          marqueeSkewTo = gsap.quickTo(marqueeTrack, 'skewX', { duration: 0.24, ease: 'power2.out' });
           ST.create({ trigger: '.marquee-section', start: 'top bottom', end: 'bottom top', onUpdate: self => {
-            const skew = clamp(self.getVelocity() / -850, -3, 3);
-            if (marqueeSkewTween) marqueeSkewTween.kill();
-            marqueeSkewTween = gsap.to(marqueeTrack, { skewX: skew, duration: 0.24, ease: 'power2.out', overwrite: true });
-          }, onLeave: () => gsap.to(marqueeTrack, { skewX: 0, duration: 0.3 }) });
+            marqueeSkewTo(clamp(self.getVelocity() / -850, -3, 3));
+          }, onLeave: () => marqueeSkewTo(0), onLeaveBack: () => marqueeSkewTo(0) });
         }
         const workTrackEl = $('#work-track');
         if (workSection && !workSection.hidden && workTrackEl && caseStudies.length) {
@@ -761,7 +776,10 @@
           });
         }
         if (processCards.length && !mobileQuery.matches) {
-          const stack = $('.process-stack');
+          processCards.forEach((card, index) => {
+            if (index === 0) gsap.set(card, { position: 'relative', inset: 'auto', opacity: 1, y: 0, scale: 1, zIndex: processCards.length });
+            else gsap.set(card, { position: 'absolute', inset: 0, opacity: 0, y: 34, scale: 0.985, zIndex: processCards.length - index });
+          });
           const timeline = gsap.timeline({ scrollTrigger: { trigger: '.process-pin', start: 'top top+=70', end: () => '+=' + (window.innerHeight * (processCards.length - 1) * 0.82), pin: true, scrub: 0.6, invalidateOnRefresh: true } });
           processCards.forEach((card, index) => {
             if (index === 0) { gsap.set(card, { opacity: 1, y: 0, scale: 1, zIndex: processCards.length }); return; }
@@ -789,7 +807,7 @@
           footer.addEventListener('pointerleave', () => gsap.to(footer, { rotateX: 0, rotateY: 0, duration: 0.5, ease: 'power3.out' }), { signal });
         }
       }, doc);
-      return () => { context.revert(); marqueeSkewTween?.kill(); marqueeSkewTween = null; };
+      return () => { context.revert(); marqueeSkewTween?.kill(); marqueeSkewTween = null; marqueeSkewTo = null; };
     });
     mm.add('(max-width: 700px) and (prefers-reduced-motion: no-preference)', () => {
       const context = gsap.context(() => {
