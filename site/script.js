@@ -46,8 +46,58 @@
   }
   const workSection = $('#work');
   if (workSection && config.caseStudies.length) {
-    workSection.hidden = false;
-    // Add approved case-study cards here; empty configuration intentionally renders no cards.
+    const track = $('.work-track', workSection);
+    if (track) {
+      track.innerHTML = '';
+      config.caseStudies.forEach((item, index) => {
+        const article = doc.createElement('article');
+        article.className = 'project-card';
+        const visual = doc.createElement('div');
+        visual.className = 'project-visual';
+        if (item.image) {
+          const image = doc.createElement('img');
+          image.src = item.image;
+          image.alt = item.imageAlt || item.title || 'Project image';
+          image.loading = 'lazy';
+          image.decoding = 'async';
+          visual.append(image);
+        } else {
+          const word = doc.createElement('div');
+          word.className = 'visual-word';
+          word.textContent = item.title || '';
+          visual.append(word);
+        }
+        const meta = doc.createElement('div');
+        meta.className = 'project-meta';
+        const copy = doc.createElement('div');
+        const category = doc.createElement('span');
+        category.textContent = item.category || '';
+        const title = doc.createElement('h3');
+        title.textContent = item.title || '';
+        copy.append(category, title);
+        const year = doc.createElement('span');
+        year.className = 'project-year';
+        year.textContent = item.year || '';
+        meta.append(copy, year);
+        const summary = doc.createElement('p');
+        summary.className = 'project-summary';
+        summary.textContent = item.summary || '';
+        article.append(visual, meta, summary);
+        track.append(article);
+      });
+      workSection.hidden = false;
+    }
+  } else {
+    workSection?.setAttribute('hidden', '');
+    $('a[href="#work"]').forEach(link => {
+      if (link.classList.contains('text-link')) {
+        link.href = '#services';
+        link.innerHTML = root.lang === 'ar' ? 'استكشف خدماتنا <span aria-hidden="true">↘</span>' : 'EXPLORE OUR SERVICES <span aria-hidden="true">↘</span>';
+      } else {
+        link.closest('.menu-links a')?.setAttribute('hidden', '');
+      }
+    });
+    $('.work-progress')?.setAttribute('hidden', '');
   }
   function escapeHTML(value) {
     return value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
