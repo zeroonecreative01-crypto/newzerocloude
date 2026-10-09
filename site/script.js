@@ -204,7 +204,7 @@
     if (!railPointerDown || (event.pointerId != null && event.pointerId !== railPointerId)) return;
     railPointerDown = false; railPointerId = null;
     if (!railDidDrag) return;
-    requestAnimationFrame(() => { if (cursorLabel) cursorLabel.textContent = 'VIEW'; });
+    requestAnimationFrame(() => { railDidDrag = false; if (cursorLabel) cursorLabel.textContent = 'VIEW'; });
   };
   workPinWrap?.addEventListener('pointerup', finishRailDrag, { signal });
   workPinWrap?.addEventListener('pointercancel', finishRailDrag, { signal });
