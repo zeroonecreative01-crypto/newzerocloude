@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+<title id="title">ZERO ONE — From 0 to 1</title><desc id="desc">ZERO ONE creative partner. Strategy, identity, content, growth.</desc>
+<rect width="1200" height="630" fill="#0A0A0A"/>
+<path d="M825 -100 L1300 375 M780 -55 L1255 420 M735 -10 L1210 465" stroke="#FFFFFF" stroke-opacity=".12" stroke-width="1"/>
+<circle cx="1000" cy="330" r="190" fill="none" stroke="#FF5A1F" stroke-width="2"/><circle cx="1000" cy="330" r="142" fill="none" stroke="#FFFFFF" stroke-opacity=".22" stroke-width="1"/>
+<text x="80" y="110" fill="#FFFFFF" font-family="Arial,Helvetica,sans-serif" font-size="22" letter-spacing="6">ZERO ONE / CREATIVE PARTNER</text>
+<text x="72" y="340" fill="#FFFFFF" font-family="Arial,Helvetica,sans-serif" font-size="160" font-weight="700" letter-spacing="-10">FROM <tspan fill="#FF5A1F">0</tspan></text>
+<text x="72" y="495" fill="#FFFFFF" font-family="Arial,Helvetica,sans-serif" font-size="160" font-weight="700" letter-spacing="-10">TO <tspan fill="#FF5A1F">1.</tspan></text>
+<text x="82" y="570" fill="#FFFFFF" font-family="Arial,Helvetica,sans-serif" font-size="20" letter-spacing="3">STRATEGY. IDENTITY. CONTENT. GROWTH.</text>
+</svg>
