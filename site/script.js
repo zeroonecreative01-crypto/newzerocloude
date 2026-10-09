@@ -130,7 +130,6 @@
       '.hero-bottom p': 'استراتيجية. هوية. محتوى. نمو.<br>فريق واحد يرافقك من أول فكرة.',
       '.text-link': 'اكتشف أعمالنا <span aria-hidden="true">↘</span>',
       '.scroll-cue span:first-child': 'مرّر للاستكشاف',
-      '.marquee-section': 'الفكرة → الاستراتيجية → المحتوى → الإعلانات → النمو',
       '.about .section-kicker span:first-child': '01 / ما نؤمن به',
       '.about .section-kicker span:last-child': 'بلا اختصارات. بلا ضجيج.',
       '.about-copy p': 'كل شيء كبير يبدأ <span>بفكرة</span>. نمنحها <span>اتجاهًا</span>، ونبني علامة يتذكرها الناس، ونصنع زخمًا يحوّل الاهتمام إلى <span>فعل</span>. لا تخمين ولا وصفات مستعارة؛ فقط خطوات مدروسة.',
@@ -167,11 +166,11 @@
       '.contact-action-row > p': 'لا تحتاج إلى عرض تقديمي.<br>أخبرنا فقط بما تبنيه.',
       '.form-heading h3': 'أخبرنا عمّا تعمل عليه.',
       '.form-heading p': 'شاركنا بعض التفاصيل وسنرد عليك عبر البريد الإلكتروني.',
-      '.contact-form label:nth-of-type(1)': 'الاسم',
-      '.contact-form label:nth-of-type(2)': 'البريد الإلكتروني',
-      '.contact-form label:nth-of-type(3)': 'الشركة / العلامة <span class="optional">(اختياري)</span>',
-      '.contact-form label:nth-of-type(4)': 'ما الخدمة التي تحتاجها؟',
-      '.contact-form label:nth-of-type(5)': 'تفاصيل المشروع',
+      '.contact-form label:nth-of-type(1) .field-label': 'الاسم',
+      '.contact-form label:nth-of-type(2) .field-label': 'البريد الإلكتروني',
+      '.contact-form label:nth-of-type(3) .field-label': 'الشركة / العلامة <span class="optional">(اختياري)</span>',
+      '.contact-form label:nth-of-type(4) .field-label': 'ما الخدمة التي تحتاجها؟',
+      '.contact-form label:nth-of-type(5) .field-label': 'تفاصيل المشروع',
       '.form-submit': 'إرسال طلب المشروع <span aria-hidden="true">↗</span>',
       '.contact-links > .underlink': 'zeroone.creative.01@gmail.com <span aria-hidden="true">↗</span>',
       '.back-top': 'العودة للأعلى <span aria-hidden="true">↑</span>',
@@ -211,6 +210,7 @@
         if (activeService === key) selectService(key, lang);
       }
     });
+    $('.marquee-group').forEach(group => { group.innerHTML = lang === 'ar' ? '<span>الفكرة</span><b aria-hidden="true">→</b><span>الاستراتيجية</span><b aria-hidden="true">→</b><span>المحتوى</span><b aria-hidden="true">→</b><span>الإعلانات</span><b aria-hidden="true">→</b><span>النمو</span><i aria-hidden="true">✳</i>' : '<span>IDEA</span><b aria-hidden="true">→</b><span>STRATEGY</span><b aria-hidden="true">→</b><span>CONTENT</span><b aria-hidden="true">→</b><span>ADS</span><b aria-hidden="true">→</b><span>GROWTH</span><i aria-hidden="true">✳</i>'; });
     if (lang === 'ar') {
       const optionTexts = ['اختر خدمة', 'الاستراتيجية', 'بناء العلامة التجارية', 'التواصل الاجتماعي', 'الإعلانات والأداء', 'إنتاج المحتوى', 'موقع إلكتروني', 'أخرى'];
       const options = $$('#contact-form select option');
