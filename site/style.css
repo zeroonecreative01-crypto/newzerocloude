@@ -417,3 +417,8 @@ html[dir="rtl"] .whatsapp-float{right:auto;left:22px}
   .work-track{transform:none!important}
   .project-card .project-summary{font-size:10px}
 }
+
+[data-split-lines] .line{display:block;overflow:hidden}
+.project-visual{display:block}
+.loader-one{transform-origin:60px 60px}
+@media(max-width:700px){.project-visual{display:grid}}
