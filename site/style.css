@@ -2,6 +2,7 @@
 :root{--black:#0A0A0A;--orange:#FF5A1F;--white:#FFFFFF;--black-72:rgba(10,10,10,.72);--black-35:rgba(10,10,10,.35);--white-72:rgba(255,255,255,.72);--white-48:rgba(255,255,255,.48);--white-24:rgba(255,255,255,.24);--white-12:rgba(255,255,255,.12);--orange-22:rgba(255,90,31,.22);--pad:clamp(22px,5.25vw,88px);--display:'Anton',Impact,sans-serif;--body:'Inter',Arial,sans-serif;--ease:cubic-bezier(.16,1,.3,1);--vh:1vh}
 *{box-sizing:border-box}
 html{background:var(--black);scroll-behavior:auto;scrollbar-color:var(--orange) var(--black);scrollbar-width:thin}
+html.intro-pending{overflow:hidden}
 body{margin:0;background:var(--black);color:var(--white);font:400 14px/1.5 var(--body);overflow-x:clip;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 body.menu-open,body.modal-open{overflow:hidden}
 button,input,textarea,select{font:inherit}
@@ -21,7 +22,7 @@ img,video{height:auto}
 .theme-light{background:var(--white);color:var(--black)}
 .theme-orange{background:var(--orange);color:var(--black)}
 .scroll-progress{position:fixed;z-index:1500;top:0;left:0;width:100%;height:2px;pointer-events:none}
-.scroll-progress span{display:block;width:0;height:100%;background:var(--orange);transform-origin:left center}
+.scroll-progress span{display:block;width:100%;height:100%;background:var(--orange);transform:scaleX(0);transform-origin:left center}
 .grain{position:fixed;inset:-50%;z-index:1200;pointer-events:none;opacity:.045;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.86' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E");background-size:180px 180px;animation:grain-drift .22s steps(2) infinite}
 @keyframes grain-drift{0%{transform:translate(0,0)}25%{transform:translate(1%,-1%)}50%{transform:translate(-1%,1%)}75%{transform:translate(1%,1%)}100%{transform:translate(-1%,-1%)}}
 .page-curtain{position:fixed;inset:0;z-index:1400;background:var(--orange);transform:scaleY(0);transform-origin:bottom;pointer-events:none;will-change:transform}
@@ -168,7 +169,7 @@ html.has-custom-cursor,html.has-custom-cursor body,html.has-custom-cursor a,html
 .project-summary{max-width:500px;margin:12px 0 0;font-size:11px;line-height:1.6}
 .work-progress{display:flex;align-items:center;gap:20px;padding-top:32px;font-size:8px;font-weight:700;letter-spacing:.1em}
 .work-progress-line{flex:1;height:1px;background:var(--black-35);overflow:hidden}
-.work-progress-line i{display:block;width:0;height:100%;background:var(--orange);transform-origin:left}
+.work-progress-line i{display:block;width:100%;height:100%;background:var(--orange);transform:scaleX(0);transform-origin:left}
 .work-counter{white-space:nowrap}
 .case-modal{position:fixed;inset:0;z-index:1600;background:var(--black);color:var(--white);padding:22px var(--pad) 40px;overflow:auto;overscroll-behavior:contain}
 .case-modal-bar{display:flex;justify-content:space-between;align-items:center;padding-bottom:18px;border-bottom:1px solid var(--white-24);font-size:9px;font-weight:700;letter-spacing:.12em}
@@ -189,7 +190,7 @@ html.has-custom-cursor,html.has-custom-cursor body,html.has-custom-cursor a,html
 .process-heading h2{font-size:clamp(66px,11.5vw,165px)}
 .process-pin{position:relative}
 .process-progress{position:absolute;top:0;left:0;width:100%;height:1px;background:var(--white-24);z-index:5}
-.process-progress span{display:block;width:25%;height:100%;background:var(--orange);transform-origin:left}
+.process-progress span{display:block;width:100%;height:100%;background:var(--orange);transform:scaleX(.25);transform-origin:left}
 .process-counter{display:flex;gap:9px;align-items:center;margin:22px 0;font-size:9px;font-weight:700;letter-spacing:.12em}
 .process-current{color:var(--orange);min-width:20px}
 .process-stack{position:relative;min-height:clamp(330px,36vw,500px);display:grid;gap:14px}
@@ -412,6 +413,7 @@ html[dir="rtl"] .whatsapp-float{right:auto;left:22px}
 .project-visual img,.project-visual video{transition:transform .65s var(--ease)}
 .project-card:hover .project-visual img,.project-card:focus-visible .project-visual img,.project-card:hover .project-visual video,.project-card:focus-visible .project-visual video{transform:scale(1.045)}
 @media(max-width:700px){
+  html.intro-pending{overflow:auto}
   .project-card{scroll-snap-align:start}
   .work-pin-wrap{overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
   .work-track{transform:none!important}
