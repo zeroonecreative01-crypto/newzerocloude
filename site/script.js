@@ -178,7 +178,7 @@
       '.hero-stamp span:first-child': 'من الصفر',
       '.hero-stamp span:last-child': 'إلى شيء أكبر',
       '.hero-bottom p': 'استراتيجية. هوية. محتوى. نمو.<br>فريق واحد يرافقك من أول فكرة.',
-      '.text-link': 'اكتشف أعمالنا <span aria-hidden="true">↘</span>',
+      '.text-link': 'استكشف خدماتنا <span aria-hidden="true">↘</span>',
       '.scroll-cue span:first-child': 'مرّر للاستكشاف',
       '.about .section-kicker span:first-child': '01 / ما نؤمن به',
       '.about .section-kicker span:last-child': 'بلا اختصارات. بلا ضجيج.',
