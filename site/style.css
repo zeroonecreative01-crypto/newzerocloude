@@ -26,3 +26,5 @@ html:not(.custom-cursor-enabled) body *{cursor:auto!important}
   .footer-mark .logo-image{width:40px;height:52px}
   .preloader-mark{width:112px;height:144px}
 }
+
+html.custom-cursor-enabled body,html.custom-cursor-enabled body *{cursor:none!important}
