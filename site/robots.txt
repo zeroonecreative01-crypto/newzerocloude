@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://zero-one9.vercel.app/sitemap.xml
