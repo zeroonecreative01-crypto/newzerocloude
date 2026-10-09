@@ -130,3 +130,13 @@ html[dir="rtl"] .whatsapp-float{right:auto;left:22px}
   *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
   .grain,.cursor-dot,.cursor-ring{display:none!important}
 }
+
+html[dir="rtl"] .hero-stamp{left:auto;right:var(--pad);transform-origin:right center}
+html[dir="rtl"] .hero-graphic{right:auto;left:-8vw}
+html[dir="rtl"] .hero-side-note{right:auto;left:var(--pad)}
+html[dir="rtl"] .hero-bottom .text-link{direction:rtl}
+html[dir="rtl"] .about-grid,html[dir="rtl"] .about-aside{direction:rtl}
+html[dir="rtl"] .process-card-main{direction:rtl}
+html[dir="rtl"] .contact-action-row{direction:rtl}
+html[dir="rtl"] .site-footer{direction:rtl}
+html[dir="rtl"] .back-top,html[dir="rtl"] .copyright{justify-self:start}
