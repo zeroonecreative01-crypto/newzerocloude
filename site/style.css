@@ -38,3 +38,7 @@ html.custom-cursor-enabled body,html.custom-cursor-enabled body *{cursor:none!im
   .site-header .logo-image{width:42px;height:54px;}
   .footer-mark .logo-image{width:32px;height:42px;}
 }
+
+/* Keep contact/social links tidy when including WhatsApp */
+.social-links{flex-wrap:wrap;row-gap:14px}
+@media(max-width:600px){.social-links{justify-content:flex-start;column-gap:18px;row-gap:14px}}
