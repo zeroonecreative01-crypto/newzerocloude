@@ -46,6 +46,7 @@
   }
   const workSection = $('#work');
   if (workSection && config.caseStudies.length) {
+    $('.menu-links a[href="#work"]')?.removeAttribute('hidden');
     const track = $('.work-track', workSection);
     if (track) {
       track.innerHTML = '';
