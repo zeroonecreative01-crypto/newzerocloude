@@ -180,11 +180,42 @@
   }
   renderCaseStudies();
 
+  const workPinWrap = $('.work-pin-wrap');
+  let railPointerDown = false, railDidDrag = false, railLastX = 0, railPointerId = null;
+  workPinWrap?.addEventListener('pointerdown', event => {
+    if (event.pointerType !== 'mouse' || mobileQuery.matches) return;
+    railPointerDown = true; railDidDrag = false; railLastX = event.clientX; railPointerId = event.pointerId;
+    try { workPinWrap.setPointerCapture(event.pointerId); } catch (_) {}
+  }, { signal });
+  workPinWrap?.addEventListener('pointermove', event => {
+    if (!railPointerDown || event.pointerId !== railPointerId) return;
+    const delta = event.clientX - railLastX;
+    if (Math.abs(delta) > 2) {
+      railDidDrag = true;
+      event.preventDefault();
+      window.scrollBy({ top: -delta * 1.15, behavior: 'auto' });
+      const label = $('.cursor-ring span');
+      if (label) label.textContent = 'DRAG';
+      cursorRing?.classList.add('is-active');
+    }
+    railLastX = event.clientX;
+  }, { signal });
+  const finishRailDrag = event => {
+    if (!railPointerDown || (event.pointerId != null && event.pointerId !== railPointerId)) return;
+    railPointerDown = false; railPointerId = null;
+    if (!railDidDrag) return;
+    requestAnimationFrame(() => { if (cursorLabel) cursorLabel.textContent = 'VIEW'; });
+  };
+  workPinWrap?.addEventListener('pointerup', finishRailDrag, { signal });
+  workPinWrap?.addEventListener('pointercancel', finishRailDrag, { signal });
+
   function openCase(index, trigger) {
     const item = caseStudies[index];
     if (!item || !caseModal) return;
     activeCase = item;
     previousFocus = trigger || doc.activeElement;
+    const sourceVisual = trigger?.querySelector('.project-visual');
+    const sourceRect = sourceVisual ? sourceVisual.getBoundingClientRect() : null;
     body.classList.add('modal-open');
     caseModal.hidden = false; caseModal.inert = false; caseModal.setAttribute('aria-hidden', 'false');
     caseMedia.replaceChildren();
@@ -210,9 +241,19 @@
       section.append(heading, paragraph); caseDetails.append(section);
     });
     if (gsap && !prefersReduced.matches) {
-      gsap.set(caseModal, { autoAlpha: 1 });
-      gsap.fromTo(caseModal, { yPercent: 8, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.65, ease: 'power4.inOut' });
-      gsap.fromTo(caseMedia, { scale: 0.96, opacity: 0.6 }, { scale: 1, opacity: 1, duration: 0.7, ease: 'power3.out', delay: 0.12 });
+      gsap.set(caseModal, { yPercent: 0, opacity: 1 });
+      const targetRect = caseMedia.getBoundingClientRect();
+      if (sourceRect && targetRect.width && targetRect.height) {
+        gsap.fromTo(caseMedia, {
+          x: sourceRect.left - targetRect.left,
+          y: sourceRect.top - targetRect.top,
+          scaleX: sourceRect.width / targetRect.width,
+          scaleY: sourceRect.height / targetRect.height,
+          transformOrigin: 'top left',
+          opacity: 0.75
+        }, { x: 0, y: 0, scaleX: 1, scaleY: 1, opacity: 1, duration: 0.68, ease: 'power4.inOut', clearProps: 'transform' });
+      }
+      gsap.fromTo($('.case-modal-copy'), { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, delay: 0.15, ease: 'power3.out' });
     }
     modalOpen = true;
     caseClose?.focus();
@@ -225,6 +266,7 @@
     else finish();
   }
   workTrack?.addEventListener('click', event => {
+    if (railDidDrag) { railDidDrag = false; event.preventDefault(); return; }
     const card = event.target.closest('[data-case-index]');
     if (card) openCase(Number(card.dataset.caseIndex), card);
   }, { signal });
@@ -760,7 +802,7 @@
         if (highlightWords.length) gsap.fromTo(highlightWords, { opacity: 0.22 }, { opacity: 1, stagger: 0.12, ease: 'none', scrollTrigger: { trigger: $('.aside-copy'), start: 'top 78%', end: 'bottom 45%', scrub: true } });
         if (canvas) gsap.to(particleState, { morph: 1, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 0.7 } });
         if (marqueeTrack) {
-          gsap.to(marqueeTrack, { xPercent: -25, ease: 'none', scrollTrigger: { trigger: '.marquee-section', start: 'top bottom', end: 'bottom top', scrub: 0.7 } });
+          gsap.to(marqueeTrack, { xPercent: -50, ease: 'none', scrollTrigger: { trigger: '.marquee-section', start: 'top bottom', end: 'bottom top', scrub: 0.7 } });
           marqueeSkewTo = gsap.quickTo(marqueeTrack, 'skewX', { duration: 0.24, ease: 'power2.out' });
           ST.create({ trigger: '.marquee-section', start: 'top bottom', end: 'bottom top', onUpdate: self => {
             marqueeSkewTo(clamp(self.getVelocity() / -850, -3, 3));
@@ -770,7 +812,10 @@
         if (workSection && !workSection.hidden && workTrackEl && caseStudies.length) {
           const distance = () => Math.max(0, workTrackEl.scrollWidth - window.innerWidth + (parseFloat(getComputedStyle(doc.documentElement).getPropertyValue('--pad')) || 0) * 2);
           const horizontalTween = gsap.to(workTrackEl, { x: () => -distance(), ease: 'none', scrollTrigger: { trigger: workSection, start: 'top top', end: () => '+=' + distance(), pin: '.work-pin-wrap', scrub: 0.8, invalidateOnRefresh: true, anticipatePin: 1,
-            onUpdate: self => { if (workProgress) gsap.set(workProgress, { scaleX: self.progress }); } } });
+            onUpdate: self => {
+              if (workProgress) gsap.set(workProgress, { scaleX: self.progress });
+              if (workCounter) workCounter.textContent = String(Math.min(caseStudies.length, Math.floor(self.progress * caseStudies.length) + 1)).padStart(2, '0') + ' / ' + String(caseStudies.length).padStart(2, '0');
+            } } });
           $$('.project-visual img,.project-visual video', workTrackEl).forEach(media => {
             gsap.fromTo(media, { scale: 1.12 }, { scale: 1, ease: 'none', scrollTrigger: { trigger: media.closest('.project-card'), containerAnimation: horizontalTween, start: 'left right', end: 'right left', scrub: 0.5 } });
           });
