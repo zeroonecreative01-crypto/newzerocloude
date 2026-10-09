@@ -28,3 +28,13 @@ html:not(.custom-cursor-enabled) body *{cursor:auto!important}
 }
 
 html.custom-cursor-enabled body,html.custom-cursor-enabled body *{cursor:none!important}
+
+/* Refined logo sizing: slightly smaller on desktop and mobile */
+.site-header .wordmark{width:46px;min-height:60px;}
+.site-header .logo-image{width:46px;height:60px;max-width:none;object-fit:contain;filter:none;}
+.footer-mark .logo-image{width:36px;height:47px;max-width:none;object-fit:contain;filter:none;}
+@media(max-width:700px){
+  .site-header .wordmark{width:42px;min-height:54px;}
+  .site-header .logo-image{width:42px;height:54px;}
+  .footer-mark .logo-image{width:32px;height:42px;}
+}
