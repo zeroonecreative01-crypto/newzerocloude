@@ -4,6 +4,17 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "newzerocloude.vercel.app"
+        }
+      ],
+      "destination": "https://zero-one9.vercel.app/",
+      "permanent": true
+    },
+    {
       "source": "/site/:path*",
       "destination": "/:path*",
       "permanent": true
