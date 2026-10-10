@@ -11,12 +11,16 @@ window.ZERO_ONE_CONFIG = {
   assets: {
     /* Replace with approved local assets. Keep empty until supplied. */
     logo: "/zero-one-mark.png",
-    heroVideo: "",
-    ogImage: "/og-image.svg",
+    /* Optional approved image used only when a case has no dedicated image/poster. */
     caseStudyPosterFallback: ""
   },
   stats: [],
-  /* Add only approved case studies. Images/videos should be local, compressed, and have descriptive alt text. */
+  /* Add only approved case studies. Images/videos should be local, compressed, and have descriptive alt text.
+     Field template:
+     { id, title, client, category, year, summary, challenge, approach, outcome,
+       image, imageAlt, video, poster }
+     Do not add illustrative clients, outcomes, or metrics as if they were real.
+  */
   caseStudies: [],
   /* Optional service preview images, keyed by service id. Empty values hide the floating image preview. */
   servicePreviews: {
