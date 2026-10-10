@@ -1,4 +1,5 @@
-/* ZERO ONE content source.
+/* ZERO ONE interaction redesign release — 0 to 1.
+   ZERO ONE content source.
    Empty values are intentional: no demo clients, stats, or portfolio work are published. */
 window.ZERO_ONE_CONFIG = {
   brand: {
