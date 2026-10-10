@@ -825,8 +825,8 @@
         }
         if (processCards.length && !mobileQuery.matches) {
           processCards.forEach((card, index) => {
-            if (index === 0) gsap.set(card, { position: 'relative', inset: 'auto', opacity: 1, y: 0, scale: 1, zIndex: processCards.length });
-            else gsap.set(card, { position: 'absolute', inset: 0, opacity: 0, y: 34, scale: 0.985, zIndex: processCards.length - index });
+            if (index === 0) gsap.set(card, { position: 'relative', inset: 'auto', opacity: 1, y: 0, scale: 1, zIndex: 1 });
+            else gsap.set(card, { position: 'absolute', inset: 0, opacity: 0, y: 34, scale: 0.985, zIndex: index + 1 });
           });
           const timeline = gsap.timeline({ scrollTrigger: { trigger: '.process-pin', start: 'top top+=70', end: () => '+=' + (window.innerHeight * (processCards.length - 1) * 0.82), pin: true, scrub: 0.6, invalidateOnRefresh: true } });
           processCards.forEach((card, index) => {
