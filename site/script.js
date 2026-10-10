@@ -775,6 +775,7 @@
   /* ---------- Scroll effects: only transform/opacity, contexts revert on breakpoints ---------- */
   const marqueeTrack = $('.marquee-track');
   let marqueeSkewTo = null;
+  let marqueeVelocityTrigger = null;
   function setupMotion() {
     if (!gsap || !ST || prefersReduced.matches) {
       $$('.reveal').forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
@@ -807,7 +808,7 @@
         if (marqueeTrack) {
           gsap.to(marqueeTrack, { xPercent: -50, ease: 'none', scrollTrigger: { trigger: '.marquee-section', start: 'top bottom', end: 'bottom top', scrub: 0.7 } });
           marqueeSkewTo = gsap.quickTo(marqueeTrack, 'skewX', { duration: 0.24, ease: 'power2.out' });
-          ST.create({ trigger: '.marquee-section', start: 'top bottom', end: 'bottom top', onUpdate: self => {
+          marqueeVelocityTrigger = ST.create({ trigger: '.marquee-section', start: 'top bottom', end: 'bottom top', onUpdate: self => {
             marqueeSkewTo(clamp(self.getVelocity() / -850, -3, 3));
           }, onLeave: () => marqueeSkewTo(0), onLeaveBack: () => marqueeSkewTo(0) });
         }
@@ -855,7 +856,7 @@
           footer.addEventListener('pointerleave', () => gsap.to(footer, { rotateX: 0, rotateY: 0, duration: 0.5, ease: 'power3.out' }), { signal });
         }
       }, doc);
-      return () => { context.revert(); marqueeSkewTo = null; };
+      return () => { context.revert(); marqueeVelocityTrigger?.kill(); marqueeVelocityTrigger = null; marqueeSkewTo = null; };
     });
     mm.add('(max-width: 700px) and (prefers-reduced-motion: no-preference)', () => {
       const context = gsap.context(() => {
