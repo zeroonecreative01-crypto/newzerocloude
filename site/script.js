@@ -34,6 +34,7 @@
   const caseStudies = Array.isArray(config.caseStudies) ? config.caseStudies.filter(item => item && item.title) : [];
   const stats = Array.isArray(config.stats) ? config.stats.filter(item => item && item.label && Number.isFinite(Number(item.value))) : [];
   const email = config.brand?.email || 'zeroone.creative.01@gmail.com';
+  if (config.assets?.logo) $('.logo-image').forEach(image => { image.src = config.assets.logo; });
 
   /* ---------- Progressive enhancement / loader ---------- */
   const preloader = $('.preloader');
@@ -149,7 +150,7 @@
       button.setAttribute('aria-label', 'View case study: ' + item.title);
       button.dataset.cursor = 'VIEW';
       const visual = doc.createElement('span'); visual.className = 'project-visual';
-      const imageUrl = item.image || item.poster || '';
+      const imageUrl = item.image || item.poster || config.assets?.caseStudyPosterFallback || '';
       if (imageUrl) {
         const image = doc.createElement('img');
         image.src = imageUrl;
@@ -219,7 +220,7 @@
     body.classList.add('modal-open');
     caseModal.hidden = false; caseModal.inert = false; caseModal.setAttribute('aria-hidden', 'false');
     caseMedia.replaceChildren();
-    const source = item.image || item.poster || '';
+    const source = item.image || item.poster || config.assets?.caseStudyPosterFallback || '';
     if (item.video) {
       const video = doc.createElement('video'); video.src = item.video; video.controls = true; video.playsInline = true; video.preload = 'metadata';
       if (source) video.poster = source;
