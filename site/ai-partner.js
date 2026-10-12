@@ -94,7 +94,8 @@
     websiteField.before(label);
   }
   function syncSelectors() {
-    fillSelect(ui.campaignSelect, campaigns, "Choose a campaign", (item) => item.name);\n    fillSelect(ui.researchCampaign, campaigns, "Choose a campaign", (item) => item.name);
+    fillSelect(ui.campaignSelect, campaigns, "Choose a campaign", (item) => item.name);
+    fillSelect(ui.researchCampaign, campaigns, "Choose a campaign", (item) => item.name);
     fillSelect(ui.prospectSelect, prospects, "Choose a prospect", (item) => item.company || item.name);
     const assignSelect = $("#prospect-campaign");
     if (assignSelect) fillSelect(assignSelect, campaigns, "Save without campaign", (item) => item.name);
