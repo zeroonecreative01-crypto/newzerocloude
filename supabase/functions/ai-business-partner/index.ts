@@ -570,7 +570,7 @@ Deno.serve(async (req: Request) => {
     status: campaign.approval_required ? "pending_approval" : "draft",
     model,
     idempotency_key: idempotencyKey,
-  }).select("id,campaign_id,prospect_id,channel,step_number,subject,body,status,generated_at").single();
+  }).select("id,campaign_id,lead_id,channel,step_number,subject,body,status,generated_at").single();
 
   if (draftError || !draft) {
     await admin.from("ai_agent_runs").update({
