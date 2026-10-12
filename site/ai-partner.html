@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#0A0A0A">
+  <title>AI Business Partner — ZERO ONE</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/ai-partner.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="/ai-partner.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="ZERO ONE home"><span class="brand-mark">0<span>1</span></span><span>ZERO ONE<small>AI BUSINESS PARTNER</small></span></a>
+    <div class="topbar-right"><span class="mode"><i></i> DRAFT-ONLY MODE</span><button id="sign-out" class="button ghost" hidden>Sign out</button></div>
+  </header>
+
+  <main class="shell">
+    <section class="intro">
+      <div><p class="eyebrow">INTELLIGENCE / SALES / GROWTH</p><h1>Your next move,<br><span>already in motion.</span></h1><p class="lede">A private workspace for prospect research, campaign briefs, and personalized outreach drafts.</p></div>
+      <div class="intro-mark" aria-hidden="true"><span>0</span><b>1</b><i></i></div>
+    </section>
+
+    <div id="notice" class="notice" role="status" aria-live="polite">Connecting to ZERO ONE workspace…</div>
+
+    <section id="auth-panel" class="panel auth-panel">
+      <div class="panel-head"><div><p class="eyebrow">OWNER ACCESS</p><h2>Sign in to continue.</h2></div><span class="step">01 / ACCESS</span></div>
+      <p class="muted">We'll send a secure sign-in link to your email. Only an account explicitly added to the admin allowlist can access this workspace.</p>
+      <form id="login-form" class="inline-form"><label class="field"><span>Work email</span><input id="login-email" type="email" autocomplete="email" required maxlength="254" placeholder="you@company.com"></label><button class="button primary" type="submit">Send secure link <span>↗</span></button></form>
+      <p class="fine">Access is restricted by Supabase Auth and row-level security. Signing in alone does not grant admin rights.</p>
+    </section>
+
+    <section id="workspace" hidden>
+      <div class="section-heading"><div><p class="eyebrow">CONTROL ROOM</p><h2>Pipeline overview</h2></div><span id="user-label" class="user-label"></span></div>
+      <div class="stats">
+        <article class="stat"><span>PROSPECTS</span><strong id="count-prospects">—</strong><small>Saved business records</small></article>
+        <article class="stat"><span>CAMPAIGNS</span><strong id="count-campaigns">—</strong><small>Campaign briefs</small></article>
+        <article class="stat"><span>DRAFTS</span><strong id="count-drafts">—</strong><small>Awaiting review / status</small></article>
+        <article class="stat"><span>AGENT RUNS</span><strong id="count-runs">—</strong><small>Execution history</small></article>
+      </div>
+
+      <div class="grid two">
+        <section class="panel">
+          <div class="panel-head"><div><p class="eyebrow">01 / STRATEGY</p><h3>Create a campaign</h3></div><span class="icon-number">01</span></div>
+          <form id="campaign-form" class="form-stack">
+            <label class="field"><span>Campaign name</span><input name="name" required maxlength="160" placeholder="Global brand growth — Q4"></label>
+            <label class="field"><span>Objective</span><select name="objective"><option value="qualified_leads">Qualified leads</option><option value="brand_strategy">Brand strategy</option><option value="identity">Brand identity</option><option value="social_growth">Social media growth</option><option value="performance_marketing">Performance marketing</option></select></label>
+            <label class="field"><span>Target markets <small>comma-separated</small></span><input name="target_markets" placeholder="UAE, UK, Saudi Arabia"></label>
+            <label class="field"><span>Target sectors <small>comma-separated</small></span><input name="target_sectors" placeholder="Restaurants, clinics, fashion"></label>
+            <label class="field"><span>Approved services <small>comma-separated</small></span><input name="services_offered" placeholder="Branding, social media, performance ads"></label>
+            <label class="field"><span>Draft language</span><select name="language"><option value="en">English</option><option value="ar">Arabic</option></select></label>
+            <fieldset class="channels"><legend>Channels to draft for</legend><label><input type="checkbox" name="channels" value="email" checked> Email</label><label><input type="checkbox" name="channels" value="linkedin"> LinkedIn</label><label><input type="checkbox" name="channels" value="instagram"> Instagram</label><label><input type="checkbox" name="channels" value="whatsapp"> WhatsApp</label></fieldset>
+            <label class="checkline"><input type="checkbox" name="approval_required" checked> Require owner approval for every draft</label>
+            <button class="button primary" type="submit">Save campaign <span>↗</span></button>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><div><p class="eyebrow">02 / OPPORTUNITY</p><h3>Add a prospect</h3></div><span class="icon-number">02</span></div>
+          <form id="prospect-form" class="form-stack">
+            <label class="field"><span>Business name</span><input name="business_name" required maxlength="200" placeholder="Company / brand name"></label>
+            <div class="form-row"><label class="field"><span>Market / country</span><input name="market" maxlength="100" placeholder="United Arab Emirates"></label><label class="field"><span>Sector</span><input name="sector" maxlength="120" placeholder="Hospitality"></label></div>
+            <label class="field"><span>Website URL</span><input name="website_url" type="url" maxlength="500" placeholder="https://example.com"></label>
+            <label class="field"><span>Public business email</span><input name="public_contact_email" type="email" maxlength="254" placeholder="hello@example.com"></label>
+            <label class="field"><span>Source URL <small>required for traceability</small></span><input name="source_url" type="url" required maxlength="500" placeholder="https://source-of-business-info.com"></label>
+            <label class="field"><span>Research notes</span><textarea name="source_notes" rows="3" maxlength="1200" placeholder="Public facts relevant to ZERO ONE's services…"></textarea></label>
+            <label class="field"><span>Fit score <small>0–100, optional</small></span><input name="fit_score" type="number" min="0" max="100" step="1" placeholder="Not scored yet"></label>
+            <button class="button primary" type="submit">Save prospect <span>↗</span></button>
+          </form>
+        </section>
+      </div>
+
+      <section class="panel draft-panel">
+        <div class="panel-head"><div><p class="eyebrow">03 / PERSONALISATION</p><h3>Generate an outreach draft</h3></div><span class="icon-number">03</span></div>
+        <p class="muted">Choose a saved campaign and prospect. The agent checks channel eligibility and suppression records, then creates a draft. This workspace has no send action.</p>
+        <form id="draft-form" class="draft-form">
+          <label class="field"><span>Campaign</span><select name="campaign_id" id="draft-campaign" required><option value="">Choose a campaign</option></select></label>
+          <label class="field"><span>Prospect</span><select name="prospect_id" id="draft-prospect" required><option value="">Choose a prospect</option></select></label>
+          <label class="field"><span>Channel</span><select name="channel" id="draft-channel" required><option value="email">Email</option><option value="linkedin">LinkedIn</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option></select></label>
+          <label class="field"><span>Step</span><select name="step_number"><option value="1">First contact</option><option value="2">Follow-up 1</option><option value="3">Follow-up 2</option></select></label>
+          <button class="button primary" type="submit">Generate draft <span>↗</span></button>
+        </form>
+        <div id="draft-result" class="draft-result" hidden></div>
+      </section>
+
+      <div class="grid two">
+        <section class="panel"><div class="panel-head"><div><p class="eyebrow">PIPELINE / A</p><h3>Recent campaigns</h3></div><button class="button small ghost" data-refresh>Refresh</button></div><div id="campaign-list" class="record-list"></div></section>
+        <section class="panel"><div class="panel-head"><div><p class="eyebrow">PIPELINE / B</p><h3>Recent prospects</h3></div><button class="button small ghost" data-refresh>Refresh</button></div><div id="prospect-list" class="record-list"></div></section>
+      </div>
+      <section class="panel"><div class="panel-head"><div><p class="eyebrow">OUTPUT / AUDIT</p><h3>Recent drafts</h3></div><button class="button small ghost" data-refresh>Refresh</button></div><div id="draft-list" class="record-list"></div></section>
+    </section>
+
+    <footer><span>ZERO ONE® / FROM 0 TO 1.</span><span>PRIVATE WORKSPACE · NO AUTOMATED SENDING</span></footer>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
