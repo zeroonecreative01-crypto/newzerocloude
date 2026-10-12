@@ -1,8 +1,8 @@
 (() => {
   "use strict";
-  const SUPABASE_URL = "https://wfxaacrxolofifflwsak.supabase.co";
+  const SUPABASE_URL = "https://kwmzyzwhugrxglqpsmwq.supabase.co";
   // Publishable key only; never put a service-role key in browser code.
-  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_2mx_ZxJMnKa9hZHOYLHqQQ_aIDNXpwK";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_6A_-HbC-jB5JTWjbY4wbQQ_9iOKJXLl";
   const $ = (selector, scope = document) => scope.querySelector(selector);
   const ui = {
     notice: $("#notice"), auth: $("#auth-panel"), workspace: $("#workspace"),
