@@ -369,7 +369,7 @@
       toast("Prospect research completed. No outreach was sent.");
     } catch (error) {
       console.error("Prospect research failed", error);
-      toast("Research failed. Confirm the Edge Function is deployed, OPENAI_API_KEY is configured, and the migration is applied.", "error");
+      toast("Research failed. Confirm the Edge Function is deployed, GEMINI_API_KEY is configured, and the migration is applied.", "error");
     } finally {
       button.disabled = false;
       button.innerHTML = 'Research prospects <span>↗</span>';
@@ -407,7 +407,7 @@
       toast("Draft generated. No message was sent.");
     } catch (error) {
       console.error("Draft generation failed", error);
-      toast("Draft generation failed. Confirm the function is deployed, OPENAI_API_KEY is configured, and the prospect is assigned to the campaign.", "error");
+      toast("Draft generation failed. Confirm the function is deployed, GEMINI_API_KEY is configured, and the prospect is assigned to the campaign.", "error");
     } finally {
       button.disabled = false;
       button.innerHTML = 'Generate draft <span>↗</span>';
