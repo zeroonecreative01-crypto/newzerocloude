@@ -43,7 +43,7 @@ Draft:
 }
 ```
 
-Requests require a valid Supabase user JWT whose UUID exists in `public.app_admins`. The prospect must be linked to the campaign, the channel must be enabled for that campaign, and the prospect/recipient must not be suppressed.
+Requests require a valid Supabase user JWT whose UUID exists in `public.app_admins`. Research writes only source-backed business records and campaign links; draft generation requires the prospect to be linked to the campaign, the channel to be enabled for that campaign, and the prospect/recipient not to be suppressed.
 
 ## Current integrations
 
