@@ -8,7 +8,7 @@
     notice: $("#notice"), auth: $("#auth-panel"), workspace: $("#workspace"),
     login: $("#login-form"), loginEmail: $("#login-email"), signOut: $("#sign-out"),
     userLabel: $("#user-label"), campaignForm: $("#campaign-form"),
-    prospectForm: $("#prospect-form"), draftForm: $("#draft-form"),
+    prospectForm: $("#prospect-form"), researchForm: $("#research-form"), researchCampaign: $("#research-campaign"), researchResult: $("#research-result"), draftForm: $("#draft-form"),
     campaignSelect: $("#draft-campaign"), prospectSelect: $("#draft-prospect"),
     channelSelect: $("#draft-channel"), draftResult: $("#draft-result"),
     campaignList: $("#campaign-list"), prospectList: $("#prospect-list"),
@@ -94,7 +94,7 @@
     websiteField.before(label);
   }
   function syncSelectors() {
-    fillSelect(ui.campaignSelect, campaigns, "Choose a campaign", (item) => item.name);
+    fillSelect(ui.campaignSelect, campaigns, "Choose a campaign", (item) => item.name);\n    fillSelect(ui.researchCampaign, campaigns, "Choose a campaign", (item) => item.name);
     fillSelect(ui.prospectSelect, prospects, "Choose a prospect", (item) => item.business_name);
     const assignSelect = $("#prospect-campaign");
     if (assignSelect) fillSelect(assignSelect, campaigns, "Save without campaign", (item) => item.name);
@@ -276,6 +276,65 @@
     ui.prospectForm.reset();
     await loadData();
     toast("Prospect saved" + (campaignId ? " and added to campaign." : "."));
+  });
+
+  ui.researchForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!sessionUser) return;
+    const form = new FormData(ui.researchForm);
+    const market = String(form.get("market") || "").trim();
+    const sector = String(form.get("sector") || "").trim();
+    if (!market && !sector) return toast("Enter a target market, sector, or both.", "error");
+    const payload = {
+      action: "research_prospects",
+      campaign_id: String(form.get("campaign_id") || ""),
+      market,
+      sector,
+      limit: Number(form.get("limit") || 5),
+    };
+    const button = ui.researchForm.querySelector('button[type="submit"]');
+    button.disabled = true;
+    button.textContent = "Researching…";
+    ui.researchResult.hidden = true;
+    try {
+      const { data, error } = await client.functions.invoke("ai-business-partner", { body: payload });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      ui.researchResult.replaceChildren();
+      const summary = data.summary || {};
+      appendText(ui.researchResult, "h4", "", `Research complete · ${summary.added || 0} new · ${summary.linked || 0} linked · ${summary.skipped || 0} skipped`);
+      for (const prospect of (data.prospects || [])) {
+        const item = document.createElement("div");
+        item.className = "research-result-item";
+        appendText(item, "strong", "", prospect.business_name + " · Fit " + prospect.fit_score + "/100");
+        const source = document.createElement("a");
+        source.href = prospect.source_url;
+        source.target = "_blank";
+        source.rel = "noopener noreferrer";
+        source.textContent = "Open source evidence ↗";
+        item.append(source);
+        if (prospect.website_url) {
+          const website = document.createElement("a");
+          website.href = prospect.website_url;
+          website.target = "_blank";
+          website.rel = "noopener noreferrer";
+          website.textContent = " · Business website ↗";
+          item.append(website);
+        }
+        if (prospect.fit_rationale) appendText(item, "p", "", prospect.fit_rationale);
+        ui.researchResult.append(item);
+      }
+      if (!(data.prospects || []).length) appendText(ui.researchResult, "p", "empty", "No new source-verified prospects were saved. Try a narrower market or sector.");
+      ui.researchResult.hidden = false;
+      await loadData();
+      toast("Prospect research completed. No outreach was sent.");
+    } catch (error) {
+      console.error("Prospect research failed", error);
+      toast("Research failed. Confirm the Edge Function is deployed, OPENAI_API_KEY is configured, and the migration is applied.", "error");
+    } finally {
+      button.disabled = false;
+      button.innerHTML = 'Research prospects <span>↗</span>';
+    }
   });
 
   ui.campaignSelect.addEventListener("change", updateChannelOptions);
