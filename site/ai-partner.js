@@ -95,7 +95,7 @@
   }
   function syncSelectors() {
     fillSelect(ui.campaignSelect, campaigns, "Choose a campaign", (item) => item.name);\n    fillSelect(ui.researchCampaign, campaigns, "Choose a campaign", (item) => item.name);
-    fillSelect(ui.prospectSelect, prospects, "Choose a prospect", (item) => item.business_name);
+    fillSelect(ui.prospectSelect, prospects, "Choose a prospect", (item) => item.company || item.name);
     const assignSelect = $("#prospect-campaign");
     if (assignSelect) fillSelect(assignSelect, campaigns, "Save without campaign", (item) => item.name);
     updateChannelOptions();
@@ -130,17 +130,17 @@
       setNotice("Sign in with your approved ZERO ONE admin account to access the workspace.");
       return;
     }
-    const { data: membership, error } = await client.from("app_admins")
-      .select("user_id").eq("user_id", session.user.id).maybeSingle();
+    const { data: profile, error } = await client.from("profiles")
+      .select("id,role,is_active").eq("id", session.user.id).maybeSingle();
     if (error) {
       hideWorkspace();
-      setNotice("The workspace schema is not ready or access could not be verified. Do not retry with another account; check the migration and RLS setup.", "error");
+      setNotice("The workspace schema is not ready or access could not be verified. Check the existing CRM profile and RLS setup.", "error");
       return;
     }
-    if (!membership) {
+    if (!profile || !profile.is_active || !["admin", "editor", "sales"].includes(profile.role)) {
       await client.auth.signOut();
       hideWorkspace();
-      setNotice("This account is authenticated but is not on the ZERO ONE admin allowlist. An authorized owner must add its verified Auth user ID.", "error");
+      setNotice("This account is authenticated but does not have an active ZERO ONE staff profile. Ask the workspace owner to provision access.", "error");
       return;
     }
     showWorkspace(session.user);
@@ -157,8 +157,8 @@
     try {
       const [campaignRes, prospectRes, draftRes, runRes] = await Promise.all([
         client.from("ai_campaigns").select("id,name,objective,target_markets,target_sectors,services_offered,languages,channels,status,approval_required,created_at").order("created_at", { ascending: false }).limit(100),
-        client.from("ai_prospects").select("id,business_name,website_url,market,sector,public_contact_email,source_url,fit_score,status,do_not_contact,created_at").order("created_at", { ascending: false }).limit(200),
-        client.from("ai_outreach_drafts").select("id,campaign_id,prospect_id,channel,subject,body,status,generated_at").order("generated_at", { ascending: false }).limit(50),
+        client.from("leads").select("id,name,company,email,whatsapp,market,status,created_at,ai_lead_research(website_url,sector,fit_score,source_url,fit_rationale,do_not_contact)").order("created_at", { ascending: false }).limit(200),
+        client.from("ai_outreach_drafts").select("id,campaign_id,lead_id,channel,subject,body,status,generated_at").order("generated_at", { ascending: false }).limit(50),
         client.from("ai_agent_runs").select("id,run_type,status,started_at").order("started_at", { ascending: false }).limit(100),
       ]);
       for (const result of [campaignRes, prospectRes, draftRes, runRes]) {
@@ -178,11 +178,14 @@
       if (!campaigns.length) empty(ui.campaignList, "No campaigns yet. Create a campaign brief above.");
       campaigns.slice(0, 8).forEach((item) => record(ui.campaignList, item.name, (item.target_markets || []).join(", ") || "No markets set", item.status));
       if (!prospects.length) empty(ui.prospectList, "No prospects yet. Add a business with a source URL.");
-      prospects.slice(0, 8).forEach((item) => record(ui.prospectList, item.business_name, [item.market, item.sector, item.fit_score == null ? "" : "Fit " + item.fit_score].filter(Boolean).join(" · "), item.status));
+      prospects.slice(0, 8).forEach((item) => {
+        const meta = Array.isArray(item.ai_lead_research) ? item.ai_lead_research[0] : item.ai_lead_research;
+        record(ui.prospectList, item.company || item.name, [item.market, meta?.sector, meta?.fit_score == null ? "" : "Fit " + meta.fit_score].filter(Boolean).join(" · "), item.status);
+      });
       if (!drafts.length) empty(ui.draftList, "No drafts yet. Generate the first one after saving a campaign and prospect.");
       drafts.slice(0, 12).forEach((item) => {
-        const prospect = prospects.find((candidate) => candidate.id === item.prospect_id);
-        record(ui.draftList, item.subject || (prospect?.business_name || "Outreach draft"), item.channel + " · " + new Date(item.generated_at).toLocaleString(), item.status);
+        const lead = prospects.find((candidate) => candidate.id === item.lead_id);
+        record(ui.draftList, item.subject || (lead?.company || lead?.name || "Outreach draft"), item.channel + " · " + new Date(item.generated_at).toLocaleString(), item.status);
       });
     } catch (error) {
       console.error("ZERO ONE workspace load failed", error);
@@ -194,7 +197,7 @@
   async function assignProspect(campaignId, prospectId) {
     if (!campaignId) return;
     const { error } = await client.from("ai_campaign_prospects").upsert({
-      campaign_id: campaignId, prospect_id: prospectId, stage: "queued",
+      campaign_id: campaignId, lead_id: prospectId, stage: "queued",
     }, { onConflict: "campaign_id,prospect_id" });
     if (error) throw error;
   }
@@ -205,7 +208,7 @@
     const email = ui.loginEmail.value.trim();
     const { error } = await client.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin + window.location.pathname },
+      options: { shouldCreateUser: false, emailRedirectTo: window.location.origin + window.location.pathname },
     });
     if (error) return toast(error.message || "Could not send the sign-in link.", "error");
     setNotice("A secure sign-in link was requested. Check your inbox and open it on this device.", "success");
@@ -263,15 +266,39 @@
       fit_score: fitValue ? Number(fitValue) : null,
       created_by: sessionUser.id,
     };
-    const { data, error } = await client.from("ai_prospects").insert(recordData).select("id").single();
-    if (error) return toast(error.message || "Could not save prospect.", "error");
+    const { data, error } = await client.from("leads").insert({
+      name: recordData.business_name,
+      company: recordData.business_name,
+      email: recordData.public_contact_email,
+      market: recordData.market,
+      message: recordData.source_notes,
+      service_interest: recordData.sector,
+      source: "ai_research",
+      status: "qualified",
+      notes: "Added to ZERO ONE CRM through the AI Business Partner workspace.",
+    }).select("id").single();
+    if (error) return toast(error.message || "Could not save CRM lead.", "error");
+    const { error: researchError } = await client.from("ai_lead_research").insert({
+      lead_id: data.id,
+      website_url: recordData.website_url,
+      sector: recordData.sector,
+      source_url: recordData.source_url,
+      source_notes: recordData.source_notes,
+      fit_score: recordData.fit_score,
+      created_by: sessionUser.id,
+      last_verified_at: new Date().toISOString(),
+    });
+    if (researchError) {
+      await client.from("leads").delete().eq("id", data.id);
+      return toast("Could not save research metadata; the incomplete lead was rolled back.", "error");
+    }
     const campaignId = String(form.get("campaign_id") || "");
     try {
       if (campaignId) await assignProspect(campaignId, data.id);
     } catch (assignError) {
-      console.error("Prospect saved but campaign assignment failed", assignError);
+      console.error("Lead saved but campaign assignment failed", assignError);
       await loadData();
-      return toast("Prospect saved, but campaign assignment failed. Add it to a campaign before drafting.", "error");
+      return toast("Lead saved, but campaign assignment failed. Add it to a campaign before drafting.", "error");
     }
     ui.prospectForm.reset();
     await loadData();
