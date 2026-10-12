@@ -1,6 +1,6 @@
--- ZERO ONE AI Business Partner foundation.
--- Staged in Git only. Uses the existing ZERO ONE CRM (public.leads / public.profiles).
--- Do not apply until the target environment has been explicitly selected and reviewed.
+-- ZERO ONE AI Business Partner schema for the isolated development project.
+-- Uses the compatible dev CRM surface (public.leads / public.profiles); no production data is copied.
+-- Do not apply to production without a separate migration review.
 
 alter type public.lead_source add value if not exists 'ai_research';
 
