@@ -32,6 +32,30 @@
     ui.toast.hidden = false;
     window.setTimeout(() => { ui.toast.hidden = true; }, 4200);
   }
+  async function describeFunctionError(error, fallback) {
+    let providerError = "";
+    try {
+      const response = error?.context;
+      if (response && typeof response.clone === "function") {
+        const payload = await response.clone().json();
+        providerError = String(payload?.error || "");
+      }
+    } catch (_) {}
+    const code = providerError || String(error?.message || "");
+    if (/gemini_http_429|resource_exhausted|quota/i.test(code)) {
+      return "Gemini returned HTTP 429: rate limit or API quota reached. Wait for quota reset or check Google AI Studio usage/billing; do not keep retrying.";
+    }
+    if (/gemini_http_401|gemini_http_403/i.test(code)) {
+      return "Gemini rejected the API key or its permissions. Check the key in the development project's Edge Function Secrets.";
+    }
+    if (/ai_provider_not_configured|missing_gemini_key/i.test(code)) {
+      return "GEMINI_API_KEY is not available to the Edge Function. Check the secret in the development project.";
+    }
+    if (/prospect_research_failed|draft_generation_failed/i.test(code)) {
+      return "The AI provider request failed. Open Supabase AI Agent Runs to inspect the latest error code.";
+    }
+    return fallback;
+  }
   function commaList(value) {
     return String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
   }
@@ -369,7 +393,7 @@
       toast("Prospect research completed. No outreach was sent.");
     } catch (error) {
       console.error("Prospect research failed", error);
-      toast("Research failed. Confirm the Edge Function is deployed, GEMINI_API_KEY is configured, and the migration is applied.", "error");
+      toast(await describeFunctionError(error, "Research failed. Check the latest AI Agent Run in Supabase for the exact error."), "error");
     } finally {
       button.disabled = false;
       button.innerHTML = 'Research prospects <span>↗</span>';
@@ -407,7 +431,7 @@
       toast("Draft generated. No message was sent.");
     } catch (error) {
       console.error("Draft generation failed", error);
-      toast("Draft generation failed. Confirm the function is deployed, GEMINI_API_KEY is configured, and the prospect is assigned to the campaign.", "error");
+      toast(await describeFunctionError(error, "Draft generation failed. Check the latest AI Agent Run in Supabase for the exact error."), "error");
     } finally {
       button.disabled = false;
       button.innerHTML = 'Generate draft <span>↗</span>';
