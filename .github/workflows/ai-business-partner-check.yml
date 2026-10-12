@@ -1,0 +1,32 @@
+name: AI Business Partner checks
+
+on:
+  pull_request:
+    paths:
+      - "site/ai-partner.html"
+      - "site/ai-partner.css"
+      - "site/ai-partner.js"
+      - "supabase/**"
+      - ".github/workflows/ai-business-partner-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  static-and-edge-function-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check dashboard JavaScript syntax
+        run: node --check site/ai-partner.js
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check Supabase Edge Function
+        run: deno check supabase/functions/ai-business-partner/index.ts
