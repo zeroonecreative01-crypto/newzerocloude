@@ -30,9 +30,9 @@
 
     <section id="auth-panel" class="panel auth-panel">
       <div class="panel-head"><div><p class="eyebrow">OWNER ACCESS</p><h2>Sign in to continue.</h2></div><span class="step">01 / ACCESS</span></div>
-      <p class="muted">We'll send a secure sign-in link to your email. Only an account explicitly added to the admin allowlist can access this workspace.</p>
+      <p class="muted">We'll send a secure sign-in link to your email. Only an existing, active ZERO ONE staff profile can access this workspace.</p>
       <form id="login-form" class="inline-form"><label class="field"><span>Work email</span><input id="login-email" type="email" autocomplete="email" required maxlength="254" placeholder="you@company.com"></label><button class="button primary" type="submit">Send secure link <span>↗</span></button></form>
-      <p class="fine">Access is restricted by Supabase Auth and row-level security. Signing in alone does not grant admin rights.</p>
+      <p class="fine">Access is restricted by Supabase Auth, the existing staff-role system, and row-level security. New account creation is disabled here.</p>
     </section>
 
     <section id="workspace" hidden>
