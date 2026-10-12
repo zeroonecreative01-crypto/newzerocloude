@@ -85,6 +85,246 @@ Deno.serve(async (req: Request) => {
   }
 
   const action = cleanString(body.action, 60);
+  if (action === "research_prospects") {
+    const campaignId = cleanString(body.campaign_id, 64);
+    const market = cleanString(body.market, 120);
+    const sector = cleanString(body.sector, 120);
+    const requestedLimit = Number.isInteger(body.limit) ? Number(body.limit) : 5;
+    const limit = Math.min(10, Math.max(1, requestedLimit));
+    if (!campaignId || (!market && !sector)) {
+      return json({ error: "campaign_id_and_market_or_sector_required" }, 400, origin);
+    }
+
+    const { data: campaign, error: campaignError } = await admin
+      .from("ai_campaigns").select("*").eq("id", campaignId).maybeSingle();
+    if (campaignError) return json({ error: "campaign_lookup_failed" }, 503, origin);
+    if (!campaign) return json({ error: "campaign_not_found" }, 404, origin);
+    if (["paused", "completed", "archived"].includes(campaign.status)) {
+      return json({ error: "campaign_not_available_for_research" }, 409, origin);
+    }
+
+    const { data: run, error: runError } = await admin.from("ai_agent_runs").insert({
+      run_type: "prospect_research",
+      status: "running",
+      campaign_id: campaignId,
+      started_by: user.id,
+      input_summary: { market, sector, limit },
+    }).select("id").single();
+    if (runError || !run) return json({ error: "could_not_start_agent_run" }, 503, origin);
+
+    const openAiKey = Deno.env.get("OPENAI_API_KEY");
+    if (!openAiKey) {
+      await admin.from("ai_agent_runs").update({
+        status: "failed", error_code: "missing_openai_key",
+        error_message: "OPENAI_API_KEY is not configured.", finished_at: new Date().toISOString(),
+      }).eq("id", run.id);
+      return json({ error: "ai_provider_not_configured", run_id: run.id }, 503, origin);
+    }
+
+    const model = Deno.env.get("OPENAI_MODEL") ?? "gpt-4.1-mini";
+    const markets = market ? [market] : (Array.isArray(campaign.target_markets) ? campaign.target_markets : []);
+    const sectors = sector ? [sector] : (Array.isArray(campaign.target_sectors) ? campaign.target_sectors : []);
+    const services = Array.isArray(campaign.services_offered) ? campaign.services_offered : [];
+    const systemPrompt = [
+      "You are the B2B research analyst for ZERO ONE, an independent creative partner offering brand strategy, identity, social content, and performance marketing.",
+      "Use web search to identify real businesses that plausibly need one or more of the approved services. Prioritize official business websites and credible public business directories.",
+      "Return only businesses supported by public source pages. Every candidate must include a source_url that directly supports the business identity or relevance.",
+      "Never invent a business, website, email, phone number, social profile, need, or performance metric. Include contact fields only when clearly published for business contact; never guess an email or collect sensitive personal information.",
+      "Avoid duplicate entries, unrelated aggregators, scraped personal profiles, and businesses with no verifiable public source. Use null for unknown fields.",
+      "Fit score is an evidence-based estimate of service fit, not a claim about purchase intent. Explain the evidence briefly.",
+      "Return the requested number or fewer if evidence is insufficient. Do not send messages or contact any business.",
+    ].join(" ");
+    let candidates: Array<Record<string, unknown>>;
+    try {
+      const response = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${openAiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          max_output_tokens: 3000,
+          tools: [{ type: "web_search" }],
+          input: [
+            { role: "system", content: [{ type: "input_text", text: systemPrompt }] },
+            { role: "user", content: [{ type: "input_text", text: JSON.stringify({
+              task: "Find and qualify public business prospects for ZERO ONE.",
+              target_markets: markets,
+              target_sectors: sectors,
+              approved_services: services,
+              campaign_objective: campaign.objective,
+              max_candidates: limit,
+              required_fields: ["business_name", "website_url", "market", "sector", "source_url", "public_contact_email", "linkedin_url", "instagram_url", "whatsapp_business_phone", "source_notes", "fit_score", "fit_rationale"],
+            }) }] },
+          ],
+          text: {
+            format: {
+              type: "json_schema",
+              name: "zero_one_prospect_research",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  candidates: {
+                    type: "array",
+                    maxItems: 10,
+                    items: {
+                      type: "object",
+                      properties: {
+                        business_name: { type: "string" },
+                        website_url: { type: ["string", "null"] },
+                        market: { type: ["string", "null"] },
+                        sector: { type: ["string", "null"] },
+                        source_url: { type: "string" },
+                        public_contact_email: { type: ["string", "null"] },
+                        linkedin_url: { type: ["string", "null"] },
+                        instagram_url: { type: ["string", "null"] },
+                        whatsapp_business_phone: { type: ["string", "null"] },
+                        source_notes: { type: "string" },
+                        fit_score: { type: "integer", minimum: 0, maximum: 100 },
+                        fit_rationale: { type: "string" },
+                      },
+                      required: ["business_name", "website_url", "market", "sector", "source_url", "public_contact_email", "linkedin_url", "instagram_url", "whatsapp_business_phone", "source_notes", "fit_score", "fit_rationale"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["candidates"],
+                additionalProperties: false,
+              },
+            },
+          },
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(`openai_http_${response.status}`);
+      const outputText = typeof payload.output_text === "string"
+        ? payload.output_text
+        : (payload.output ?? []).flatMap((item: { content?: Array<{ text?: string }> }) => item.content ?? [])
+          .map((item: { text?: string }) => item.text ?? "").join("");
+      const parsed = JSON.parse(outputText);
+      candidates = Array.isArray(parsed.candidates) ? parsed.candidates.slice(0, limit) : [];
+    } catch (error) {
+      const errorCode = error instanceof Error ? error.message.slice(0, 100) : "research_failed";
+      await admin.from("ai_agent_runs").update({
+        status: "failed", error_code: "prospect_research_failed",
+        error_message: errorCode, finished_at: new Date().toISOString(),
+      }).eq("id", run.id);
+      return json({ error: "prospect_research_failed", run_id: run.id }, 502, origin);
+    }
+
+    const toPublicUrl = (value: unknown): string | null => {
+      const raw = cleanString(value, 500);
+      if (!raw) return null;
+      try {
+        const parsed = new URL(raw);
+        return ["https:", "http:"].includes(parsed.protocol) ? parsed.toString().slice(0, 500) : null;
+      } catch {
+        return null;
+      }
+    };
+    let added = 0;
+    let linked = 0;
+    let skipped = 0;
+    const saved: Array<{ id: string; business_name: string; website_url: string | null; source_url: string }> = [];
+
+    for (const candidate of candidates) {
+      const businessName = cleanString(candidate.business_name, 200);
+      const sourceUrl = toPublicUrl(candidate.source_url);
+      const websiteUrl = toPublicUrl(candidate.website_url);
+      if (!businessName || !sourceUrl || !Number.isInteger(candidate.fit_score) ||
+          Number(candidate.fit_score) < 0 || Number(candidate.fit_score) > 100) {
+        skipped++;
+        continue;
+      }
+
+      let existing: { id: string; business_name: string; website_url: string | null } | null = null;
+      let lookupError: unknown = null;
+      if (websiteUrl) {
+        const result = await admin.from("ai_prospects").select("id,business_name,website_url")
+          .eq("website_url", websiteUrl).maybeSingle();
+        existing = result.data;
+        lookupError = result.error;
+      } else {
+        const result = await admin.from("ai_prospects").select("id,business_name,website_url")
+          .ilike("business_name", businessName).eq("market", cleanString(candidate.market, 120) || market || "")
+          .limit(1).maybeSingle();
+        existing = result.data;
+        lookupError = result.error;
+      }
+      if (lookupError) { skipped++; continue; }
+
+      let prospectId = existing?.id;
+      if (!existing) {
+        const { data: inserted, error: insertError } = await admin.from("ai_prospects").insert({
+          business_name: businessName,
+          website_url: websiteUrl,
+          market: cleanString(candidate.market, 120) || market || (markets[0] ?? null),
+          sector: cleanString(candidate.sector, 120) || sector || (sectors[0] ?? null),
+          public_contact_email: cleanString(candidate.public_contact_email, 254).toLowerCase() || null,
+          linkedin_url: toPublicUrl(candidate.linkedin_url),
+          instagram_url: toPublicUrl(candidate.instagram_url),
+          whatsapp_business_phone: cleanString(candidate.whatsapp_business_phone, 80) || null,
+          source_url: sourceUrl,
+          source_notes: cleanString(candidate.source_notes, 1200) || null,
+          fit_score: Number(candidate.fit_score),
+          fit_rationale: cleanString(candidate.fit_rationale, 1000) || null,
+          status: "qualified",
+          last_verified_at: new Date().toISOString(),
+          created_by: user.id,
+        }).select("id,business_name,website_url").single();
+        if (insertError || !inserted) {
+          if (insertError?.code === "23505" && websiteUrl) {
+            const raced = await admin.from("ai_prospects").select("id,business_name,website_url")
+              .eq("website_url", websiteUrl).maybeSingle();
+            prospectId = raced.data?.id;
+          } else {
+            skipped++;
+            continue;
+          }
+        } else {
+          prospectId = inserted.id;
+          added++;
+        }
+      }
+
+      if (!prospectId) { skipped++; continue; }
+      const { error: linkError } = await admin.from("ai_campaign_prospects").upsert({
+        campaign_id: campaignId, prospect_id: prospectId, stage: "qualified",
+        qualification_notes: cleanString(candidate.fit_rationale, 1000) || null,
+      }, { onConflict: "campaign_id,prospect_id" });
+      if (linkError) { skipped++; continue; }
+      linked++;
+      saved.push({
+        id: prospectId,
+        business_name: existing?.business_name || businessName,
+        website_url: existing?.website_url || websiteUrl,
+        source_url: sourceUrl,
+      });
+    }
+
+    await Promise.all([
+      admin.from("ai_agent_runs").update({
+        status: "succeeded",
+        output_summary: { found: candidates.length, added, linked, skipped, campaign_id: campaignId },
+        finished_at: new Date().toISOString(),
+      }).eq("id", run.id),
+      admin.from("ai_audit_events").insert({
+        actor_user_id: user.id,
+        event_type: "prospect_research_completed",
+        entity_type: "ai_campaigns",
+        entity_id: campaignId,
+        details: { found: candidates.length, added, linked, skipped, market, sector, no_outreach_sent: true },
+      }),
+    ]);
+
+    return json({
+      summary: { found: candidates.length, added, linked, skipped },
+      prospects: saved,
+      mode: "research_only",
+      messages_sent: 0,
+      run_id: run.id,
+    }, 201, origin);
+  }
+
   if (action === "health") {
     const { error: dbError } = await admin.from("ai_campaigns").select("id").limit(1);
     if (dbError) return json({ status: "degraded", database: "unavailable" }, 503, origin);
