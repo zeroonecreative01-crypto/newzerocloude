@@ -75,6 +75,19 @@
         </section>
       </div>
 
+      <section class="panel research-panel">
+        <div class="panel-head"><div><p class="eyebrow">03 / DISCOVERY</p><h3>Find qualified prospects</h3></div><span class="icon-number">03</span></div>
+        <p class="muted">Search public business sources for real companies that fit the campaign. Each saved prospect includes a source URL and fit rationale. Research only — no messages are sent.</p>
+        <form id="research-form" class="research-form">
+          <label class="field"><span>Campaign</span><select name="campaign_id" id="research-campaign" required><option value="">Choose a campaign</option></select></label>
+          <label class="field"><span>Target market</span><input name="market" maxlength="120" placeholder="UAE, UK, global fashion brands"></label>
+          <label class="field"><span>Sector</span><input name="sector" maxlength="120" placeholder="Restaurants, clinics, fashion"></label>
+          <label class="field"><span>Results</span><select name="limit"><option value="3">3 prospects</option><option value="5" selected>5 prospects</option><option value="10">10 prospects</option></select></label>
+          <button class="button primary" type="submit">Research prospects <span>↗</span></button>
+        </form>
+        <div id="research-result" class="draft-result" hidden></div>
+      </section>
+
       <section class="panel draft-panel">
         <div class="panel-head"><div><p class="eyebrow">03 / PERSONALISATION</p><h3>Generate an outreach draft</h3></div><span class="icon-number">03</span></div>
         <p class="muted">Choose a saved campaign and prospect. The agent checks channel eligibility and suppression records, then creates a draft. This workspace has no send action.</p>
