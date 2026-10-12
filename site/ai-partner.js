@@ -196,9 +196,9 @@
   }
   async function assignProspect(campaignId, prospectId) {
     if (!campaignId) return;
-    const { error } = await client.from("ai_campaign_prospects").upsert({
+    const { error } = await client.from("ai_campaign_leads").upsert({
       campaign_id: campaignId, lead_id: prospectId, stage: "queued",
-    }, { onConflict: "campaign_id,prospect_id" });
+    }, { onConflict: "campaign_id,lead_id" });
     if (error) throw error;
   }
 
