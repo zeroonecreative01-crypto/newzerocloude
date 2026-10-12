@@ -67,11 +67,13 @@ Deno.serve(async (req: Request) => {
   const admin = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data: membership, error: membershipError } = await admin
-    .from("app_admins").select("user_id").eq("user_id", user.id).maybeSingle();
+  const { data: profile, error: profileError } = await admin
+    .from("profiles").select("id,role,is_active").eq("id", user.id).maybeSingle();
 
-  if (membershipError) return json({ error: "authorization_check_failed" }, 503, origin);
-  if (!membership) return json({ error: "admin_access_required" }, 403, origin);
+  if (profileError) return json({ error: "authorization_check_failed" }, 503, origin);
+  if (!profile || !profile.is_active || !["admin", "editor", "sales"].includes(profile.role)) {
+    return json({ error: "active_staff_access_required" }, 403, origin);
+  }
 
   let body: Record<string, unknown>;
   try {
@@ -236,67 +238,105 @@ Deno.serve(async (req: Request) => {
         continue;
       }
 
-      let existing: { id: string; business_name: string; website_url: string | null } | null = null;
-      let lookupError: unknown = null;
-      if (websiteUrl) {
-        const result = await admin.from("ai_prospects").select("id,business_name,website_url")
-          .eq("website_url", websiteUrl).maybeSingle();
-        existing = result.data;
-        lookupError = result.error;
-      } else {
-        const result = await admin.from("ai_prospects").select("id,business_name,website_url")
-          .ilike("business_name", businessName).eq("market", cleanString(candidate.market, 120) || market || "")
-          .limit(1).maybeSingle();
-        existing = result.data;
-        lookupError = result.error;
-      }
-      if (lookupError) { skipped++; continue; }
+      const candidateMarket = cleanString(candidate.market, 120) || market || (markets[0] ?? "");
+      const candidateSector = cleanString(candidate.sector, 120) || sector || (sectors[0] ?? "");
+      let leadId: string | null = null;
+      let leadLabel = businessName;
+      let savedWebsite = websiteUrl;
+      let researchAlreadyExists = false;
 
-      let prospectId = existing?.id;
-      if (!existing) {
-        const { data: inserted, error: insertError } = await admin.from("ai_prospects").insert({
-          business_name: businessName,
+      if (websiteUrl) {
+        const result = await admin.from("ai_lead_research")
+          .select("lead_id,website_url").ilike("website_url", websiteUrl).maybeSingle();
+        if (result.error) { skipped++; continue; }
+        if (result.data) {
+          leadId = result.data.lead_id;
+          savedWebsite = result.data.website_url;
+          researchAlreadyExists = true;
+        }
+      }
+
+      if (!leadId) {
+        const existingLeadResult = await admin.from("leads")
+          .select("id,name,company,market,status")
+          .ilike("company", businessName)
+          .eq("market", candidateMarket)
+          .limit(1).maybeSingle();
+        if (existingLeadResult.error) { skipped++; continue; }
+        if (existingLeadResult.data) {
+          if (["won", "lost"].includes(existingLeadResult.data.status)) { skipped++; continue; }
+          leadId = existingLeadResult.data.id;
+          leadLabel = existingLeadResult.data.company || existingLeadResult.data.name || businessName;
+        }
+      }
+
+      if (!leadId) {
+        const { data: insertedLead, error: leadInsertError } = await admin.from("leads").insert({
+          name: businessName,
+          company: businessName,
+          email: cleanString(candidate.public_contact_email, 254).toLowerCase() || null,
+          whatsapp: cleanString(candidate.whatsapp_business_phone, 80) || null,
+          message: cleanString(candidate.source_notes, 1200) || null,
+          service_interest: candidateSector || (services[0] ?? null),
+          market: candidateMarket || null,
+          source: "ai_research",
+          status: "qualified",
+          notes: "Public-source AI research. Evidence: " + sourceUrl +
+            "\\nFit rationale: " + cleanString(candidate.fit_rationale, 1000),
+        }).select("id,name,company").single();
+
+        if (leadInsertError || !insertedLead) {
+          skipped++;
+          continue;
+        }
+        leadId = insertedLead.id;
+        leadLabel = insertedLead.company || insertedLead.name || businessName;
+        added++;
+      }
+
+      if (!researchAlreadyExists) {
+        const { error: metadataError } = await admin.from("ai_lead_research").insert({
+          lead_id: leadId,
           website_url: websiteUrl,
-          market: cleanString(candidate.market, 120) || market || (markets[0] ?? null),
-          sector: cleanString(candidate.sector, 120) || sector || (sectors[0] ?? null),
-          public_contact_email: cleanString(candidate.public_contact_email, 254).toLowerCase() || null,
+          sector: candidateSector || null,
           linkedin_url: toPublicUrl(candidate.linkedin_url),
           instagram_url: toPublicUrl(candidate.instagram_url),
-          whatsapp_business_phone: cleanString(candidate.whatsapp_business_phone, 80) || null,
           source_url: sourceUrl,
           source_notes: cleanString(candidate.source_notes, 1200) || null,
           fit_score: Number(candidate.fit_score),
           fit_rationale: cleanString(candidate.fit_rationale, 1000) || null,
-          status: "qualified",
           last_verified_at: new Date().toISOString(),
           created_by: user.id,
-        }).select("id,business_name,website_url").single();
-        if (insertError || !inserted) {
-          if (insertError?.code === "23505" && websiteUrl) {
-            const raced = await admin.from("ai_prospects").select("id,business_name,website_url")
-              .eq("website_url", websiteUrl).maybeSingle();
-            prospectId = raced.data?.id;
+        });
+        if (metadataError) {
+          if (metadataError.code === "23505" && websiteUrl) {
+            const raced = await admin.from("ai_lead_research").select("lead_id,website_url")
+              .ilike("website_url", websiteUrl).maybeSingle();
+            if (raced.data) {
+              leadId = raced.data.lead_id;
+              savedWebsite = raced.data.website_url;
+            } else {
+              skipped++;
+              continue;
+            }
           } else {
             skipped++;
             continue;
           }
-        } else {
-          prospectId = inserted.id;
-          added++;
         }
       }
 
-      if (!prospectId) { skipped++; continue; }
-      const { error: linkError } = await admin.from("ai_campaign_prospects").upsert({
-        campaign_id: campaignId, prospect_id: prospectId, stage: "qualified",
+      if (!leadId) { skipped++; continue; }
+      const { error: linkError } = await admin.from("ai_campaign_leads").upsert({
+        campaign_id: campaignId, lead_id: leadId, stage: "qualified",
         qualification_notes: cleanString(candidate.fit_rationale, 1000) || null,
-      }, { onConflict: "campaign_id,prospect_id" });
+      }, { onConflict: "campaign_id,lead_id" });
       if (linkError) { skipped++; continue; }
       linked++;
       saved.push({
-        id: prospectId,
-        business_name: existing?.business_name || businessName,
-        website_url: existing?.website_url || websiteUrl,
+        id: leadId,
+        business_name: leadLabel,
+        website_url: savedWebsite || websiteUrl,
         source_url: sourceUrl,
         fit_score: Number(candidate.fit_score),
         fit_rationale: cleanString(candidate.fit_rationale, 1000),
@@ -339,7 +379,7 @@ Deno.serve(async (req: Request) => {
   }
 
   if (action !== "draft_outreach") {
-    return json({ error: "unsupported_action", supported_actions: ["health", "draft_outreach"] }, 400, origin);
+    return json({ error: "unsupported_action", supported_actions: ["health", "research_prospects", "draft_outreach"] }, 400, origin);
   }
 
   const campaignId = cleanString(body.campaign_id, 64);
