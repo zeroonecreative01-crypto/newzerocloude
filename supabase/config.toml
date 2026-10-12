@@ -1,4 +1,2 @@
-project_id = "wfxaacrxolofifflwsak"
-
 [functions.ai-business-partner]
 verify_jwt = true
