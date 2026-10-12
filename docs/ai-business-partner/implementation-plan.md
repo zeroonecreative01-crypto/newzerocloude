@@ -88,3 +88,14 @@ Budget posture: reuse the existing website, Vercel team, Supabase project, and a
 ## 7. Current blockers / next action
 
 The Supabase project is restored and the existing CRM/RLS has been inspected. The dashboard, proposed migration integrated with the existing leads/profile model, and research/draft-only Edge Function are on the development branch. A Vercel preview is READY and the dashboard HTML/CSS/JS routes returned HTTP 200. The migration has not been applied and the Edge Function has not been deployed because no separate Supabase development project is confirmed. Before backend activation, explicitly choose the development database target, review the existing first-user-admin trigger, verify Auth signup settings, configure OpenAI and OTP redirect settings, provision the owner profile through a trusted route, and test with synthetic records. Do not send messages or launch campaigns.
+
+
+## 8. Updated development environment status (2026-10-13)
+
+- Created separate Supabase project `zero-one-ai-dev` in `eu-west-1` on the displayed $0/month creation tier; project ref `kwmzyzwhugrxglqpsmwq`. No production data was copied.
+- The development database intentionally uses a minimal compatibility baseline (`profiles`, `leads`, enums, and a staff helper) rather than cloning the production CRM. It contains no customer records and has no signup trigger that auto-promotes the first user.
+- Applied the development baseline, AI Business Partner schema, and hardening/index migrations to the dev project. Verified all nine public tables have RLS enabled and migration history is present.
+- Security verification: `anon` cannot execute `public.is_staff()`; authenticated staff can. Supabase security advisor currently returns no findings. Performance advisor only reports unused indexes expected in a fresh, empty dev database.
+- Deployed `ai-business-partner` Edge Function to the dev project with JWT verification enabled. CORS allows the production site domains plus this Vercel project's preview URL pattern. No sending endpoint exists; the function supports research, draft-only, and health actions.
+- Updated `site/ai-partner.js` to use the isolated dev Supabase project and its publishable key, not production.
+- Remaining activation steps: configure `OPENAI_API_KEY` as a server-side Supabase Function secret (never in chat or browser code); create/invite the owner Auth user in Supabase Dashboard and provision their `public.profiles` row through a trusted admin path; verify the OTP redirect URL and run a synthetic-lead smoke test. No real messages or campaigns have been sent.
