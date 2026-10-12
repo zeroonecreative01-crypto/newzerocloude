@@ -29,8 +29,17 @@ Deno.serve(async (req: Request) => {
   const allowedOrigins = (Deno.env.get("ALLOWED_ORIGINS") ??
     "https://zero-one9.vercel.app,https://newzerocloude.vercel.app")
     .split(",").map((value) => value.trim()).filter(Boolean);
+  const isProjectPreviewOrigin = (value: string) => {
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === "https:" &&
+        /^zero-one-marketing-[a-z0-9]+-zero-one9\.vercel\.app$/.test(parsed.hostname);
+    } catch {
+      return false;
+    }
+  };
 
-  if (origin && !allowedOrigins.includes(origin)) {
+  if (origin && !allowedOrigins.includes(origin) && !isProjectPreviewOrigin(origin)) {
     return json({ error: "origin_not_allowed" }, 403);
   }
   if (req.method === "OPTIONS") {
