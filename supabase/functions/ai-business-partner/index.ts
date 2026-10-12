@@ -224,7 +224,7 @@ Deno.serve(async (req: Request) => {
     let added = 0;
     let linked = 0;
     let skipped = 0;
-    const saved: Array<{ id: string; business_name: string; website_url: string | null; source_url: string }> = [];
+    const saved: Array<{ id: string; business_name: string; website_url: string | null; source_url: string; fit_score: number; fit_rationale: string }> = [];
 
     for (const candidate of candidates) {
       const businessName = cleanString(candidate.business_name, 200);
@@ -298,6 +298,8 @@ Deno.serve(async (req: Request) => {
         business_name: existing?.business_name || businessName,
         website_url: existing?.website_url || websiteUrl,
         source_url: sourceUrl,
+        fit_score: Number(candidate.fit_score),
+        fit_rationale: cleanString(candidate.fit_rationale, 1000),
       });
     }
 
