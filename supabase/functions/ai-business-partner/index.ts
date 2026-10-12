@@ -270,6 +270,16 @@ Deno.serve(async (req: Request) => {
         }
       }
 
+      if (leadId && !researchAlreadyExists) {
+        const metadataLookup = await admin.from("ai_lead_research")
+          .select("lead_id,website_url").eq("lead_id", leadId).maybeSingle();
+        if (metadataLookup.error) { skipped++; continue; }
+        if (metadataLookup.data) {
+          researchAlreadyExists = true;
+          savedWebsite = metadataLookup.data.website_url;
+        }
+      }
+
       if (!leadId) {
         const { data: insertedLead, error: leadInsertError } = await admin.from("leads").insert({
           name: businessName,
