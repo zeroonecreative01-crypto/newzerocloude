@@ -383,7 +383,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const campaignId = cleanString(body.campaign_id, 64);
-  const prospectId = cleanString(body.prospect_id, 64);
+  const prospectId = cleanString(body.prospect_id, 64); // existing public.leads.id
   const channel = cleanString(body.channel, 30);
   const stepNumber = Number.isInteger(body.step_number) ? Number(body.step_number) : 1;
 
@@ -392,27 +392,29 @@ Deno.serve(async (req: Request) => {
   }
   if (stepNumber < 1 || stepNumber > 10) return json({ error: "invalid_step_number" }, 400, origin);
 
-  const [{ data: campaign, error: campaignError }, { data: prospect, error: prospectError }] = await Promise.all([
+  const [{ data: campaign, error: campaignError }, { data: lead, error: leadError }, { data: research, error: researchError }] = await Promise.all([
     admin.from("ai_campaigns").select("*").eq("id", campaignId).maybeSingle(),
-    admin.from("ai_prospects").select("*").eq("id", prospectId).maybeSingle(),
+    admin.from("leads").select("id,name,company,email,phone,whatsapp,market,status,service_interest,message,notes").eq("id", prospectId).maybeSingle(),
+    admin.from("ai_lead_research").select("*").eq("lead_id", prospectId).maybeSingle(),
   ]);
-  if (campaignError || prospectError) return json({ error: "record_lookup_failed" }, 503, origin);
-  if (!campaign || !prospect) return json({ error: "campaign_or_prospect_not_found" }, 404, origin);
+  if (campaignError || leadError || researchError) return json({ error: "record_lookup_failed" }, 503, origin);
+  if (!campaign || !lead) return json({ error: "campaign_or_lead_not_found" }, 404, origin);
+  if (!research) return json({ error: "lead_has_no_verified_research_metadata" }, 409, origin);
   if (["paused", "completed", "archived"].includes(campaign.status)) {
     return json({ error: "campaign_not_available_for_drafting" }, 409, origin);
   }
   if (!Array.isArray(campaign.channels) || !campaign.channels.includes(channel)) {
     return json({ error: "channel_not_enabled_for_campaign" }, 409, origin);
   }
-  if (prospect.do_not_contact || prospect.status === "suppressed") {
-    return json({ error: "prospect_suppressed" }, 409, origin);
+  if (research.do_not_contact || ["won", "lost"].includes(lead.status)) {
+    return json({ error: "lead_suppressed_or_not_eligible" }, 409, origin);
   }
 
   const contactByChannel: Record<string, string> = {
-    email: cleanString(prospect.public_contact_email, 254),
-    linkedin: cleanString(prospect.linkedin_url, 500),
-    instagram: cleanString(prospect.instagram_url, 500),
-    whatsapp: cleanString(prospect.whatsapp_business_phone, 80),
+    email: cleanString(lead.email, 254),
+    linkedin: cleanString(research.linkedin_url, 500),
+    instagram: cleanString(research.instagram_url, 500),
+    whatsapp: cleanString(lead.whatsapp, 80),
   };
   const recipientKey = normalizeAddress(contactByChannel[channel] ?? "");
   if (!recipientKey) return json({ error: "no_public_contact_for_channel" }, 409, origin);
@@ -427,11 +429,11 @@ Deno.serve(async (req: Request) => {
   if (suppressions?.length) return json({ error: "recipient_suppressed" }, 409, origin);
 
   const { data: link, error: linkError } = await admin
-    .from("ai_campaign_prospects")
-    .select("campaign_id,prospect_id")
-    .eq("campaign_id", campaignId).eq("prospect_id", prospectId).maybeSingle();
+    .from("ai_campaign_leads")
+    .select("campaign_id,lead_id")
+    .eq("campaign_id", campaignId).eq("lead_id", prospectId).maybeSingle();
   if (linkError) return json({ error: "campaign_membership_check_failed" }, 503, origin);
-  if (!link) return json({ error: "prospect_not_assigned_to_campaign" }, 409, origin);
+  if (!link) return json({ error: "lead_not_assigned_to_campaign" }, 409, origin);
 
   const idempotencyKey = [campaignId, prospectId, channel, stepNumber].join(":");
   const { data: existingDraft, error: existingError } = await admin
@@ -444,7 +446,7 @@ Deno.serve(async (req: Request) => {
     run_type: "draft_generation",
     status: "running",
     campaign_id: campaignId,
-    prospect_id: prospectId,
+    lead_id: prospectId,
     started_by: user.id,
     input_summary: { channel, step_number: stepNumber },
   }).select("id").single();
@@ -462,16 +464,14 @@ Deno.serve(async (req: Request) => {
   const model = Deno.env.get("OPENAI_MODEL") ?? "gpt-4.1-mini";
   const language = Array.isArray(campaign.languages) && campaign.languages.length
     ? String(campaign.languages[0]) : "en";
-  const contactName = cleanString(prospect.public_contact_name, 120);
   const context = {
-    business_name: cleanString(prospect.business_name, 200),
-    website_url: cleanString(prospect.website_url, 500),
-    market: cleanString(prospect.market, 100),
-    sector: cleanString(prospect.sector, 120),
-    source_url: cleanString(prospect.source_url, 500),
-    source_notes: cleanString(prospect.source_notes, 1200),
-    contact_name: contactName,
-    fit_rationale: cleanString(prospect.fit_rationale, 1000),
+    business_name: cleanString(lead.company || lead.name, 200),
+    website_url: cleanString(research.website_url, 500),
+    market: cleanString(lead.market, 100),
+    sector: cleanString(research.sector, 120),
+    source_url: cleanString(research.source_url, 500),
+    source_notes: cleanString(research.source_notes || lead.message || lead.notes, 1200),
+    fit_rationale: cleanString(research.fit_rationale, 1000),
   };
   const serviceList = Array.isArray(campaign.services_offered)
     ? campaign.services_offered.map((x: unknown) => cleanString(x, 100)).filter(Boolean)
@@ -562,7 +562,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: draft, error: draftError } = await admin.from("ai_outreach_drafts").insert({
     campaign_id: campaignId,
-    prospect_id: prospectId,
+    lead_id: prospectId,
     channel,
     step_number: stepNumber,
     subject: generated.subject,
@@ -596,7 +596,7 @@ Deno.serve(async (req: Request) => {
       event_type: "outreach_draft_created",
       entity_type: "ai_outreach_drafts",
       entity_id: draft.id,
-      details: { campaign_id: campaignId, prospect_id: prospectId, channel, step_number: stepNumber, sent: false },
+      details: { campaign_id: campaignId, lead_id: prospectId, channel, step_number: stepNumber, sent: false },
     }),
   ]);
 
