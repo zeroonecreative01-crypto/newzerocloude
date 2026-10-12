@@ -30,8 +30,8 @@
 
     <section id="auth-panel" class="panel auth-panel">
       <div class="panel-head"><div><p class="eyebrow">OWNER ACCESS</p><h2>Sign in to continue.</h2></div><span class="step">01 / ACCESS</span></div>
-      <p class="muted">We'll send a secure sign-in link to your email. Only an existing, active ZERO ONE staff profile can access this workspace.</p>
-      <form id="login-form" class="inline-form"><label class="field"><span>Work email</span><input id="login-email" type="email" autocomplete="email" required maxlength="254" placeholder="you@company.com"></label><button class="button primary" type="submit">Send secure link <span>↗</span></button></form>
+      <p class="muted">Sign in with your approved ZERO ONE staff account. Only an existing, active staff profile can access this workspace.</p>
+      <form id="login-form" class="form-stack"><label class="field"><span>Work email</span><input id="login-email" type="email" autocomplete="username" required maxlength="254" placeholder="you@company.com"></label><label class="field"><span>Password</span><input id="login-password" type="password" autocomplete="current-password" required minlength="8" placeholder="Your account password"></label><button class="button primary" type="submit">Sign in securely <span>↗</span></button><button id="send-magic-link" class="button ghost" type="button">Email me a sign-in link</button></form>
       <p class="fine">Access is restricted by Supabase Auth, the existing staff-role system, and row-level security. New account creation is disabled here.</p>
     </section>
 
