@@ -6,7 +6,7 @@
   const $ = (selector, scope = document) => scope.querySelector(selector);
   const ui = {
     notice: $("#notice"), auth: $("#auth-panel"), workspace: $("#workspace"),
-    login: $("#login-form"), loginEmail: $("#login-email"), signOut: $("#sign-out"),
+    login: $("#login-form"), loginEmail: $("#login-email"), loginPassword: $("#login-password"), magicLink: $("#send-magic-link"), signOut: $("#sign-out"),
     userLabel: $("#user-label"), campaignForm: $("#campaign-form"),
     prospectForm: $("#prospect-form"), researchForm: $("#research-form"), researchCampaign: $("#research-campaign"), researchResult: $("#research-result"), draftForm: $("#draft-form"),
     campaignSelect: $("#draft-campaign"), prospectSelect: $("#draft-prospect"),
@@ -207,6 +207,17 @@
     event.preventDefault();
     if (!client) return toast("Supabase client did not load. Refresh and retry.", "error");
     const email = ui.loginEmail.value.trim();
+    const password = ui.loginPassword.value;
+    if (!password) return toast("Enter your account password.", "error");
+    const { error } = await client.auth.signInWithPassword({ email, password });
+    if (error) return toast(error.message || "Could not sign in. Check the email and password.", "error");
+    ui.loginPassword.value = "";
+  });
+
+  ui.magicLink.addEventListener("click", async () => {
+    if (!client) return toast("Supabase client did not load. Refresh and retry.", "error");
+    const email = ui.loginEmail.value.trim();
+    if (!email) return toast("Enter your email first.", "error");
     const { error } = await client.auth.signInWithOtp({
       email,
       options: { shouldCreateUser: false, emailRedirectTo: window.location.origin + window.location.pathname },
