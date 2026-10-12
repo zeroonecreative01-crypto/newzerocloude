@@ -10,7 +10,7 @@ Budget posture: reuse the existing website, Vercel team, Supabase project, and a
 - Website repository available to the connected GitHub account: `zeroonecreative01-crypto/newzerocloude`, default branch `main`.
 - Website is a static HTML/CSS/JavaScript site served from `site/`; `site/index.html` declares the public brand email `zeroone.creative.01@gmail.com` and current social links.
 - Vercel team: `ZERO ONE` (Hobby plan); project `zero-one-marketing`, domains `zero-one9.vercel.app` and `newzerocloude.vercel.app`.
-- Supabase project `zero-one-agency-v2-`, ref `wfxaacrxolofifflwsak`, region `eu-west-1`, is currently reported as `INACTIVE`. Database table/migration inspection timed out. No Supabase Edge Functions were listed.
+- Supabase project `zero-one-agency-v2-`, ref `wfxaacrxolofifflwsak`, region `eu-west-1`, was restored and now reports `ACTIVE_HEALTHY`. SQL introspection confirms no application tables in `public`, no recorded migrations, no RLS policies, and no Edge Functions. The new migration and function remain staged in Git only.
 - A previously referenced repository name `zero-one-agency-v2-` was not accessible through the connected GitHub API; do not assume it is the current deploy source.
 - No Gmail, Meta, LinkedIn, WhatsApp Business, OpenAI API, or CRM integration credentials have been verified in this discovery pass. Never treat a brand email or public social URL as proof of authenticated access.
 
@@ -87,4 +87,4 @@ Budget posture: reuse the existing website, Vercel team, Supabase project, and a
 
 ## 7. Current blockers / next action
 
-Implementation of live CRM writes and outbound messaging is blocked until the inactive Supabase project can be inspected and the required channel credentials/permissions are explicitly connected. The safe next step is to restore/inspect Supabase, verify the actual Vercel deployment source, and then implement the CRM schema and server-side API on a feature branch. Do not send messages or launch campaigns during discovery.
+The Supabase project is restored, and the initial dashboard, proposed RLS-backed CRM migration, and draft-only/research Edge Function are now on the development branch. A Vercel preview is READY and the dashboard HTML/CSS/JS routes returned HTTP 200. The migration has not been applied and the Edge Function has not been deployed because there is no separate Supabase development project confirmed. Before backend activation, explicitly choose the intended development database target, configure OpenAI and auth settings, seed the owner admin UUID, and test with synthetic records. Do not send messages or launch campaigns.
