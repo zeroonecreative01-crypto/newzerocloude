@@ -382,7 +382,7 @@ Deno.serve(async (req: Request) => {
     if (dbError) return json({ status: "degraded", database: "unavailable" }, 503, origin);
     return json({
       status: "ok",
-      mode: "draft_only",
+      mode: "research_and_draft_only",
       outbound_sending_enabled: false,
       checked_at: new Date().toISOString(),
     }, 200, origin);
