@@ -5,6 +5,7 @@ import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import './styles.css';
+import brandMark from '../zero-one-mark.png';
 
 gsap.registerPlugin(ScrollTrigger);
 const services = [
@@ -32,7 +33,7 @@ function App(){
  const jump=id=>{setMenu(false);document.querySelector(id)?.scrollIntoView({behavior:'smooth'})};
  return <div ref={stageRef} className="app-shell">
   <div className="grain"/><div className="progress"><span/></div>
-  <header className="header"><a href="#top" className="brand" aria-label="ZERO ONE home"><img src="/zero-one-mark.png" alt="ZERO ONE"/><span>ZERO ONE<sup>®</sup></span></a><div className="header-mid">INDEPENDENT CREATIVE PARTNER<br/>BUILT FOR WHAT'S NEXT.</div><div className="header-right"><button className="lang" onClick={()=>setLang(lang==='EN'?'AR':'EN')}>{lang}</button><button className="menu-btn" onClick={()=>setMenu(!menu)}>{menu?'CLOSE':'MENU'} {menu?<X size={17}/>:<span className="burger"><i/><i/></span>}</button></div></header>
+  <header className="header"><a href="#top" className="brand" aria-label="ZERO ONE home"><img src={brandMark} alt="ZERO ONE"/><span>ZERO ONE<sup>®</sup></span></a><div className="header-mid">INDEPENDENT CREATIVE PARTNER<br/>BUILT FOR WHAT'S NEXT.</div><div className="header-right"><button className="lang" onClick={()=>setLang(lang==='EN'?'AR':'EN')}>{lang}</button><button className="menu-btn" onClick={()=>setMenu(!menu)}>{menu?'CLOSE':'MENU'} {menu?<X size={17}/>:<span className="burger"><i/><i/></span>}</button></div></header>
   <div className={`menu-panel ${menu?'is-open':''}`}><div className="menu-panel-top">ZERO ONE® / INDEX <button onClick={()=>setMenu(false)}>CLOSE <X size={16}/></button></div><nav>{[['01','About','#about'],['02','Capabilities','#services'],['03','The approach','#story'],['04','Contact','#contact']].map(x=><a key={x[0]} href={x[2]} onClick={e=>{e.preventDefault();jump(x[2])}}><small>{x[0]}</small>{x[1]}<ArrowUpRight/></a>)}</nav><div className="menu-foot">STRATEGY / IDENTITY / EXPERIENCE / GROWTH</div></div>
   <main id="top">
    <section className="hero"><div className="hero-meta"><span>CREATIVE THINKING. COMMERCIAL IMPACT.</span><span>EST. FOR THE AMBITIOUS <b>© 2026</b></span></div><div className="hero-art"><div className="hero-glow"/><canvas ref={canvasRef}/><div className="hero-grid"/><div className="hero-core"><div className="core-ring ring-1"/><div className="core-ring ring-2"/><div className="core-mark"><span>0</span><i/><b>1</b></div><div className="core-caption">A SYSTEM FOR<br/>WHAT'S NEXT</div></div></div><h1 className="hero-title"><span>FROM <em>0</em></span><span>TO <em>1</em><i>.</i></span></h1><div className="hero-side"><Asterisk size={18}/><span>We turn sharp ideas<br/>into brands that move.</span></div><div className="hero-stamp"><span>NO TEMPLATE</span><b>↗</b><span>JUST INTENTION</span></div><div className="hero-bottom"><p>Strategy. Identity. Experience. Growth.<br/>One focused team, from the first thought forward.</p><button onClick={()=>jump('#services')}>EXPLORE THE WORK <ArrowDownRight size={17}/></button></div><div className="scroll-label"><span>SCROLL TO EXPLORE</span><i/></div></section>
