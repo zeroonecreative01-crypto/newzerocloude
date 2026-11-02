@@ -1,50 +1,129 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ArrowDownRight, ArrowUpRight, Asterisk, Check, Plus, X } from 'lucide-react';
-import Lenis from 'lenis';
+import { ArrowUpRight, ArrowRight, Plus, X, Menu, Asterisk } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Lenis from 'lenis';
 import './styles.css';
-import brandMark from '../zero-one-mark.png';
 
 gsap.registerPlugin(ScrollTrigger);
-const services = [
-  { n:'01', title:'Strategy', sub:'Positioning / Research / Direction', body:'We find the signal in a crowded market. Research, positioning and a clear point of view turn ambition into a focused plan.', tags:['Market intelligence','Brand positioning','Creative direction'] },
-  { n:'02', title:'Brand identity', sub:'Identity / Voice / Guidelines', body:'A distinctive brand system with a clear visual language, confident voice and the consistency to scale across every touchpoint.', tags:['Visual identity','Brand systems','Guidelines'] },
-  { n:'03', title:'Digital experiences', sub:'Websites / UI / Development', body:'Digital platforms that feel considered, move beautifully and make every interaction earn its place.', tags:['Web design','React development','Experience design'] },
-  { n:'04', title:'Content & motion', sub:'Art direction / Film / Motion', body:'Campaigns and content built around a strong idea. Art direction, film, photography and motion with a reason to exist.', tags:['Campaigns','Production','Motion design'] },
-  { n:'05', title:'Performance', sub:'Paid media / Testing / Growth', body:'We connect creative decisions to commercial outcomes through testing, media strategy and continuous optimisation.', tags:['Paid media','Conversion strategy','Optimisation'] },
+
+const capabilities = [
+  ['01','Brand strategy','Positioning, research, naming and a point of view that gives a business direction.'],
+  ['02','Identity systems','Distinctive visual and verbal identities designed to stay consistent as brands grow.'],
+  ['03','Digital experiences','Websites and digital products shaped around clarity, craft and conversion.'],
+  ['04','Campaigns & content','Creative direction, film, photography and social content built around one strong idea.'],
+  ['05','Growth & performance','Paid media, testing and optimisation that connect creative work to measurable outcomes.']
 ];
-const chapters = [
-  ['01 / THE SPARK','Every move begins with a question.','We look for the idea that changes the direction.'],
-  ['02 / THE STRATEGY','A good idea needs a clear point of view.','Insight becomes intention. Intention becomes a plan.'],
-  ['03 / THE IDENTITY','Make it recognisable. Make it matter.','A visual and verbal language built to stay distinct.'],
-  ['04 / THE EXPERIENCE','The details are the difference.','Every screen, frame and interaction has a purpose.'],
-  ['05 / THE MOMENTUM','Built to move beyond the first impression.','We measure what matters and keep moving forward.'],
+
+const projects = [
+  { n:'01', type:'IDENTITY / ART DIRECTION', name:'A different kind of presence', tag:'Brand worlds', cls:'project-visual-one' },
+  { n:'02', type:'DIGITAL / EXPERIENCE', name:'Designed to move forward', tag:'Digital systems', cls:'project-visual-two' },
+  { n:'03', type:'CAMPAIGN / CONTENT', name:'Make the moment matter', tag:'Campaign thinking', cls:'project-visual-three' }
 ];
-function useReveal(){ useEffect(()=>{const els=gsap.utils.toArray('[data-reveal]');els.forEach(el=>gsap.fromTo(el,{y:34,autoAlpha:0},{y:0,autoAlpha:1,duration:1,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 88%',once:true}}));return()=>ScrollTrigger.getAll().forEach(t=>t.kill());},[]); }
+
 function App(){
- const [menu,setMenu]=useState(false),[active,setActive]=useState(-1),[lang,setLang]=useState('EN'),[sent,setSent]=useState(false),[form,setForm]=useState({name:'',email:'',company:'',service:'',message:''}),[busy,setBusy]=useState(false),[error,setError]=useState('');
- const canvasRef=useRef(null),stageRef=useRef(null);
- useReveal();
- useEffect(()=>{const lenis=new Lenis({duration:1.1,smoothWheel:true});lenis.on('scroll',ScrollTrigger.update);const tick=t=>lenis.raf(t*1000);gsap.ticker.add(tick);gsap.ticker.lagSmoothing(0);const ctx=gsap.context(()=>{gsap.to('.hero-art',{yPercent:18,scale:1.05,ease:'none',scrollTrigger:{trigger:'.hero',start:'top top',end:'bottom top',scrub:true}});gsap.to('.hero-title',{yPercent:24,opacity:.15,ease:'none',scrollTrigger:{trigger:'.hero',start:'top top',end:'bottom top',scrub:true}});gsap.fromTo('.chapter-media',{scale:1.17},{scale:1,ease:'none',scrollTrigger:{trigger:'.story',start:'top bottom',end:'bottom bottom',scrub:true}});gsap.fromTo('.orbit',{rotate:0},{rotate:170,ease:'none',scrollTrigger:{trigger:'.manifesto',start:'top bottom',end:'bottom top',scrub:true}});},stageRef);return()=>{ctx.revert();lenis.destroy();gsap.ticker.remove(tick)};},[]);
- useEffect(()=>{const canvas=canvasRef.current;if(!canvas)return;const c=canvas.getContext('2d');let w=0,h=0,raf=0,mouse={x:-1000,y:-1000};const pts=Array.from({length:220},(_,i)=>{const a=i/220*Math.PI*2;return{a,r:.26+Math.random()*.13,phase:Math.random()*8,size:.5+Math.random()*1.4}});const resize=()=>{const r=canvas.getBoundingClientRect();w=r.width;h=r.height;const d=Math.min(devicePixelRatio||1,1.5);canvas.width=w*d;canvas.height=h*d;c.setTransform(d,0,0,d,0,0)};resize();const onMove=e=>{const r=canvas.getBoundingClientRect();mouse={x:e.clientX-r.left,y:e.clientY-r.top}};window.addEventListener('resize',resize);canvas.addEventListener('pointermove',onMove);const draw=t=>{c.clearRect(0,0,w,h);const cx=w*.52,cy=h*.52,scale=Math.min(w,h)*.9;pts.forEach(p=>{let x=cx+Math.cos(p.a)*p.r*scale,y=cy+Math.sin(p.a)*p.r*scale;const dx=x-mouse.x,dy=y-mouse.y,d=Math.hypot(dx,dy)||1,force=Math.max(0,1-d/130)*12;x+=dx/d*force;y+=dy/d*force;c.globalAlpha=.28+(.5+.5*Math.sin(t*.0008+p.phase))*.55;c.fillStyle='#ff5a1f';c.beginPath();c.arc(x,y,p.size,0,Math.PI*2);c.fill()});c.globalAlpha=1;raf=requestAnimationFrame(draw)};raf=requestAnimationFrame(draw);return()=>{cancelAnimationFrame(raf);window.removeEventListener('resize',resize);canvas.removeEventListener('pointermove',onMove)};},[]);
- const submit=async e=>{e.preventDefault();setError('');setBusy(true);try{const r=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...form,website:''})});const data=await r.json();if(!r.ok)throw new Error(data.error||'Unable to send your message.');setSent(true)}catch(err){setError(err.message||'Something went wrong. Please try WhatsApp instead.')}finally{setBusy(false)}};
- const jump=id=>{setMenu(false);document.querySelector(id)?.scrollIntoView({behavior:'smooth'})};
- return <div ref={stageRef} className="app-shell">
-  <div className="grain"/><div className="progress"><span/></div>
-  <header className="header"><a href="#top" className="brand" aria-label="ZERO ONE home"><img src={brandMark} alt="ZERO ONE"/><span>ZERO ONE<sup>®</sup></span></a><div className="header-mid">INDEPENDENT CREATIVE PARTNER<br/>BUILT FOR WHAT'S NEXT.</div><div className="header-right"><button className="lang" onClick={()=>setLang(lang==='EN'?'AR':'EN')}>{lang}</button><button className="menu-btn" onClick={()=>setMenu(!menu)}>{menu?'CLOSE':'MENU'} {menu?<X size={17}/>:<span className="burger"><i/><i/></span>}</button></div></header>
-  <div className={`menu-panel ${menu?'is-open':''}`}><div className="menu-panel-top">ZERO ONE® / INDEX <button onClick={()=>setMenu(false)}>CLOSE <X size={16}/></button></div><nav>{[['01','About','#about'],['02','Capabilities','#services'],['03','The approach','#story'],['04','Contact','#contact']].map(x=><a key={x[0]} href={x[2]} onClick={e=>{e.preventDefault();jump(x[2])}}><small>{x[0]}</small>{x[1]}<ArrowUpRight/></a>)}</nav><div className="menu-foot">STRATEGY / IDENTITY / EXPERIENCE / GROWTH</div></div>
-  <main id="top">
-   <section className="hero"><div className="hero-meta"><span>CREATIVE THINKING. COMMERCIAL IMPACT.</span><span>EST. FOR THE AMBITIOUS <b>© 2026</b></span></div><div className="hero-art"><div className="hero-glow"/><canvas ref={canvasRef}/><div className="hero-grid"/><div className="hero-core"><div className="core-ring ring-1"/><div className="core-ring ring-2"/><div className="core-mark"><span>0</span><i/><b>1</b></div><div className="core-caption">A SYSTEM FOR<br/>WHAT'S NEXT</div></div></div><h1 className="hero-title"><span>FROM <em>0</em></span><span>TO <em>1</em><i>.</i></span></h1><div className="hero-side"><Asterisk size={18}/><span>We turn sharp ideas<br/>into brands that move.</span></div><div className="hero-stamp"><span>NO TEMPLATE</span><b>↗</b><span>JUST INTENTION</span></div><div className="hero-bottom"><p>Strategy. Identity. Experience. Growth.<br/>One focused team, from the first thought forward.</p><button onClick={()=>jump('#services')}>EXPLORE THE WORK <ArrowDownRight size={17}/></button></div><div className="scroll-label"><span>SCROLL TO EXPLORE</span><i/></div></section>
-   <section className="ticker"><div className="ticker-track">{Array.from({length:2},(_,i)=><div className="ticker-run" key={i}><span>IDEA</span><b>✳</b><span>STRATEGY</span><b>✳</b><span>IDENTITY</span><b>✳</b><span>EXPERIENCE</span><b>✳</b><span>MOMENTUM</span><b>✳</b></div>)}</div></section>
-   <section className="about section-pad" id="about"><div className="section-head" data-reveal><span>01 / THE POINT OF VIEW</span><span>NO SHORTCUTS. NO NOISE.</span></div><div className="about-grid"><h2 data-reveal>We don't follow<br/>the <i>usual.</i><br/>We make the<br/><em>next move.</em></h2><div className="about-copy" data-reveal><span className="cross">✳</span><p>Every ambitious business has a moment when the old way stops being enough. We turn that moment into a new direction — with strategy that clarifies, identity that distinguishes, and experiences that make people feel the difference.</p><div className="about-note"><span>FROM FIRST THOUGHT</span><i>↘</i><span>TO SOMETHING REAL.</span></div></div></div><div className="about-footer" data-reveal><span>INDEPENDENT BY DESIGN.</span><span>BUILT AROUND YOUR AMBITION.</span></div></section>
-   <section className="story" id="story"><div className="story-top section-pad"><div className="section-head" data-reveal><span>02 / THE ZERO ONE METHOD</span><span>AN IDEA IN MOTION.</span></div><h2 data-reveal>Not just a service.<br/><i>A whole new perspective.</i></h2></div><div className="story-scroll">{chapters.map((c,i)=><article className="story-chapter" key={c[0]}><div className="chapter-index">{c[0]}</div><div className="chapter-visual"><div className={`chapter-art art-${i+1}`}><div className="chapter-orbit orbit-a"/><div className="chapter-orbit orbit-b"/><div className="chapter-object">{i===0?'✳':i===1?'01':i===2?'◉':i===3?'↗':'∞'}</div><span className="chapter-corner">ZERO ONE® / 2026</span></div></div><div className="chapter-copy"><h3>{c[1]}</h3><p>{c[2]}</p><span>0{i+1} / 05</span></div></article>)}</div></section>
-   <section className="services section-pad" id="services"><div className="section-head" data-reveal><span>03 / WHAT WE DO</span><span>THINK FIRST. MAKE IT MATTER.</span></div><div className="services-title" data-reveal><h2>Make every<br/>move <em>count.</em></h2><p>One connected creative system. Built to turn business ambition into a brand people choose.</p></div><div className="service-list">{services.map((s,i)=><div className={`service-item ${active===i?'active':''}`} key={s.n}><button onClick={()=>setActive(active===i?-1:i)} aria-expanded={active===i}><span className="service-number">{s.n}</span><span className="service-title">{s.title}</span><span className="service-sub">{s.sub}</span><span className="service-plus">{active===i?<X/>:<Plus/>}</span></button>{active===i&&<div className="service-detail"><p>{s.body}</p><div>{s.tags.map(t=><span key={t}>{t}</span>)}</div><a href="#contact" onClick={()=>setActive(-1)}>LET'S TALK ABOUT IT <ArrowUpRight size={16}/></a></div>}</div>)}</div><div className="services-bottom"><span>ONE PARTNER. EVERY MOVE.</span><span>BUILT TO WORK TOGETHER.</span></div></section>
-   <section className="manifesto"><div className="manifesto-grid"><div className="manifesto-left" data-reveal><span>04 / THE DIFFERENCE</span><div className="orbit"><div className="orbit-center">0<span>1</span></div><i/><b/><small>IDEA → IMPACT</small></div></div><div className="manifesto-right" data-reveal><h2>Clarity<br/>is a <em>creative</em><br/>advantage.</h2><p>We believe the best work happens when strategy and creativity move as one. No layers of noise. No disconnected outputs. Just sharp thinking, considered craft and a team that takes the outcome personally.</p><a href="#contact">GET TO KNOW US <ArrowUpRight size={17}/></a></div></div></section>
-   <section className="contact section-pad" id="contact"><div className="section-head" data-reveal><span>05 / YOUR MOVE</span><span>THE NEXT GOOD THING STARTS HERE.</span></div><div className="contact-heading" data-reveal><h2>LET'S START<br/>FROM <em>0</em><i>.</i></h2><p>Got a big idea?<br/>Let's give it direction.</p></div><div className="contact-grid"><div className="contact-direct" data-reveal><a className="contact-orb" href="https://wa.me/201556764804?text=Hi%20ZERO%20ONE%2C%20I%20want%20to%20start%20a%20project" target="_blank" rel="noreferrer"><span>LET'S<br/>TALK <ArrowUpRight/></span></a><p>NO DECK NEEDED.<br/>JUST TELL US WHAT YOU'RE BUILDING.</p><a className="mail-link" href="mailto:zeroone.creative.01@gmail.com">ZEROONE.CREATIVE.01@GMAIL.COM <ArrowUpRight size={15}/></a></div><div className="form-wrap" data-reveal>{sent?<div className="success"><Check size={28}/><h3>Message received.</h3><p>Thank you. The ZERO ONE team will be in touch.</p></div>:<form onSubmit={submit}><div className="form-intro"><h3>Tell us what you're building.</h3><p>Share a few details. We'll get back to you by email.</p></div><div className="form-grid"><label>Name<input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required minLength={2} maxLength={100} placeholder="Your name"/></label><label>Email<input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} required maxLength={254} placeholder="you@company.com"/></label><label className="wide">Company / brand <small>OPTIONAL</small><input value={form.company} onChange={e=>setForm({...form,company:e.target.value})} maxLength={120} placeholder="Your company"/></label><label className="wide">What do you need?<select value={form.service} onChange={e=>setForm({...form,service:e.target.value})} required><option value="">Choose a service</option>{['Strategy','Branding','Social media','Performance ads','Content production','Website','Other'].map(v=><option key={v}>{v}</option>)}</select></label><label className="wide">Tell us about the project<textarea value={form.message} onChange={e=>setForm({...form,message:e.target.value})} required minLength={10} maxLength={5000} rows="3" placeholder="A little context goes a long way…"/></label></div>{error&&<p className="form-error">{error}</p>}<button className="submit" type="submit" disabled={busy}>{busy?'SENDING…':'SEND YOUR BRIEF'} <ArrowUpRight size={17}/></button></form>}</div></div></section>
-  </main>
-  <footer className="footer"><div className="footer-top"><a className="footer-brand" href="#top">ZERO ONE<span>®</span></a><div className="footer-links"><a href="#about">ABOUT</a><a href="#services">CAPABILITIES</a><a href="#story">APPROACH</a><a href="#contact">CONTACT</a></div><a className="back-top" href="#top">BACK TO TOP <ArrowUpRight size={16}/></a></div><div className="footer-statement">MAKE THE NEXT<br/><em>MOVE.</em></div><div className="footer-bottom"><span>© ZERO ONE 2026. ALL RIGHTS RESERVED.</span><span>FROM 0 TO 1. AND EVERY MOVE AFTER.</span><span>CAIRO / WORKING EVERYWHERE.</span></div></footer>
- </div>
+  const [menu,setMenu]=useState(false);
+  const [active,setActive]=useState(0);
+  const [form,setForm]=useState({name:'',email:'',company:'',service:'',message:''});
+  const [busy,setBusy]=useState(false);
+  const [sent,setSent]=useState(false);
+  const [error,setError]=useState('');
+
+  useEffect(()=>{
+    const lenis=new Lenis({duration:1.05,smoothWheel:true});
+    lenis.on('scroll',ScrollTrigger.update);
+    const tick=t=>lenis.raf(t*1000);
+    gsap.ticker.add(tick); gsap.ticker.lagSmoothing(0);
+    const ctx=gsap.context(()=>{
+      gsap.utils.toArray('[data-reveal]').forEach(el=>gsap.fromTo(el,{y:28,autoAlpha:0},{y:0,autoAlpha:1,duration:.85,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 88%',once:true}}));
+      gsap.to('.hero-orbit',{rotate:360,duration:38,repeat:-1,ease:'none'});
+      gsap.to('.hero-image',{yPercent:-7,ease:'none',scrollTrigger:{trigger:'.hero',start:'top top',end:'bottom top',scrub:true}});
+    });
+    return()=>{ctx.revert();lenis.destroy();gsap.ticker.remove(tick)};
+  },[]);
+
+  const jump=id=>{setMenu(false);document.querySelector(id)?.scrollIntoView({behavior:'smooth'});};
+  const submit=async e=>{
+    e.preventDefault();setBusy(true);setError('');
+    try{
+      const r=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...form,website:''})});
+      const data=await r.json();
+      if(!r.ok) throw new Error(data.error||'Unable to send your message.');
+      setSent(true);
+    }catch(err){setError(err.message||'Something went wrong. Please try WhatsApp instead.');}
+    finally{setBusy(false);}
+  };
+
+  return <div className="site-shell">
+    <header className="header">
+      <a className="wordmark" href="#top" aria-label="ZERO ONE home"><span className="mark">0<span>1</span></span><span>ZERO ONE<sup>®</sup></span></a>
+      <div className="header-note">INDEPENDENT CREATIVE COMPANY<br/>CAIRO · WORKING EVERYWHERE</div>
+      <nav className="desktop-nav"><a href="#work">WORK</a><a href="#about">ABOUT</a><a href="#capabilities">CAPABILITIES</a><a href="#contact">CONTACT <ArrowUpRight size={13}/></a></nav>
+      <button className="mobile-menu" onClick={()=>setMenu(!menu)} aria-label="Toggle menu">{menu?<X/>:<Menu/>}</button>
+    </header>
+    <div className={'mobile-panel '+(menu?'open':'')}><button onClick={()=>jump('#work')}>WORK <ArrowUpRight/></button><button onClick={()=>jump('#about')}>ABOUT <ArrowUpRight/></button><button onClick={()=>jump('#capabilities')}>CAPABILITIES <ArrowUpRight/></button><button onClick={()=>jump('#contact')}>CONTACT <ArrowUpRight/></button></div>
+
+    <main id="top">
+      <section className="hero">
+        <div className="hero-topline"><span>CREATIVE THINKING. COMMERCIAL IMPACT.</span><span>EST. 2026&nbsp; / &nbsp;01—∞</span></div>
+        <div className="hero-layout">
+          <div className="hero-copy">
+            <p className="eyebrow"><i/> BUILT FOR THE AMBITIOUS</p>
+            <h1>MAKE<br/>THE <em>NEXT</em><br/>MOVE<span className="period">.</span></h1>
+            <div className="hero-foot"><p>We turn sharp ideas into brands, experiences and momentum.</p><a href="#work" className="round-link" aria-label="Explore work"><ArrowUpRight/></a></div>
+          </div>
+          <div className="hero-art">
+            <div className="hero-image"></div>
+            <div className="hero-orbit"><span>ZERO ONE&nbsp; · &nbsp;FROM 0 TO 1&nbsp; · &nbsp;ZERO ONE&nbsp; · &nbsp;FROM 0 TO 1&nbsp; · &nbsp;</span></div>
+            <div className="hero-index"><b>01</b><span>IDEAS INTO<br/>IMPACT.</span></div>
+            <div className="hero-caption">A CLEAR POINT OF VIEW<br/>CHANGES EVERYTHING.</div>
+          </div>
+        </div>
+        <div className="hero-bottom"><span>STRATEGY / IDENTITY / EXPERIENCE / GROWTH</span><a href="#about">DISCOVER ZERO ONE <ArrowDownRightIcon/></a></div>
+      </section>
+
+      <section className="intro section-pad" id="about">
+        <div className="section-label"><span>01 / THE POINT OF VIEW</span><span>LESS NOISE. MORE MEANING.</span></div>
+        <div className="intro-grid">
+          <h2 data-reveal>From a first<br/>thought to a<br/><em>real difference.</em></h2>
+          <div className="intro-copy" data-reveal><Asterisk className="asterisk"/><p>Ambition deserves more than another agency-shaped answer. ZERO ONE brings strategy and creativity into one focused system — turning business challenges into clear ideas, distinctive brands and experiences people remember.</p><a href="#capabilities" className="text-link">WHAT WE BRING <ArrowUpRight/></a></div>
+        </div>
+        <div className="intro-bottom"><span>INDEPENDENT BY DESIGN.</span><span>BUILT AROUND YOUR AMBITION.</span></div>
+      </section>
+
+      <section className="work section-pad" id="work">
+        <div className="section-label"><span>02 / SELECTED DIRECTIONS</span><span>GOOD WORK STARTS WITH A GOOD QUESTION.</span></div>
+        <div className="work-heading"><h2 data-reveal>Ideas with<br/><em>somewhere</em><br/>to go<span>.</span></h2><p data-reveal>We don't believe in decoration for decoration's sake. Every detail has a job. Every move has a reason.</p></div>
+        <div className="project-grid">{projects.map(p=><article className="project" key={p.n}><div className={'project-visual '+p.cls}><div className="visual-label">{p.tag}</div><div className="visual-symbol">{p.n==='01'?'Z/01':p.n==='02'?'MOVE':'MAKE'}</div><span className="visual-corner">ZERO ONE®</span></div><div className="project-meta"><span>{p.n} / {p.type}</span><ArrowUpRight size={17}/></div><h3>{p.name}</h3></article>)}</div>
+        <p className="work-note">SELECTED CREATIVE DIRECTIONS — FULL CASE STUDIES COMING SOON.</p>
+      </section>
+
+      <section className="statement">
+        <div className="statement-top"><span>03 / THE ZERO ONE PRINCIPLE</span><span>FROM 0 TO 1.</span></div>
+        <h2 data-reveal>THE FIRST<br/>MOVE IS A<br/><em>DECISION.</em></h2>
+        <div className="statement-bottom"><span>CLARITY BEFORE COMPLEXITY.</span><p>We ask better questions, find the real opportunity, then make the work that moves it forward.</p></div>
+      </section>
+
+      <section className="capabilities section-pad" id="capabilities">
+        <div className="section-label"><span>04 / WHAT WE DO</span><span>ONE CONNECTED CREATIVE SYSTEM.</span></div>
+        <div className="cap-heading"><h2 data-reveal>Make every<br/><em>move</em> count.</h2><p data-reveal>From the first strategic question to the final customer touchpoint, the pieces work better together.</p></div>
+        <div className="cap-list">{capabilities.map((c,i)=><div className={'cap-item '+(active===i?'active':'')} key={c[0]}><button onClick={()=>setActive(active===i?-1:i)}><span>{c[0]}</span><strong>{c[1]}</strong><i>{active===i?<X/>:<Plus/>}</i></button>{active===i&&<div className="cap-detail"><p>{c[2]}</p><a href="#contact" onClick={()=>setActive(-1)}>LET'S TALK <ArrowUpRight/></a></div>}</div>)}</div>
+        <div className="cap-footer"><span>THINK CLEARLY.</span><span>MAKE IT MATTER.</span><span>KEEP MOVING.</span></div>
+      </section>
+
+      <section className="contact section-pad" id="contact">
+        <div className="section-label"><span>05 / YOUR NEXT MOVE</span><span>GOOD THINGS START WITH A CONVERSATION.</span></div>
+        <div className="contact-title"><h2>LET'S MAKE<br/><em>IT</em> MATTER<span>.</span></h2><p>Have a challenge, an idea<br/>or a big ambition?<br/>Start here.</p></div>
+        <div className="contact-grid">
+          <div className="contact-direct"><span className="direct-label">NO DECK NEEDED.</span><a href="https://wa.me/201556764804?text=Hi%20ZERO%20ONE%2C%20I%20want%20to%20start%20a%20project" target="_blank" rel="noreferrer" className="whatsapp-link">START A CONVERSATION <ArrowUpRight/></a><a className="email-link" href="mailto:zeroone.creative.01@gmail.com">ZEROONE.CREATIVE.01@GMAIL.COM</a><span className="location-note">CAIRO, EGYPT / AVAILABLE WORLDWIDE</span></div>
+          <div className="form-card">{sent?<div className="success"><span>01 / RECEIVED</span><h3>That's a<br/>good start.</h3><p>Thanks for reaching out. We'll be in touch.</p></div>:<form onSubmit={submit}><div className="form-head"><h3>Tell us what you're building.</h3><span>01 — 05</span></div><div className="form-fields"><label>YOUR NAME<input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required placeholder="Name"/></label><label>EMAIL ADDRESS<input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} required placeholder="Email"/></label><label>COMPANY / BRAND<input value={form.company} onChange={e=>setForm({...form,company:e.target.value})} placeholder="Optional"/></label><label>WHAT DO YOU NEED?<select value={form.service} onChange={e=>setForm({...form,service:e.target.value})} required><option value="">Choose one</option>{['Strategy','Brand identity','Digital experience','Campaigns & content','Growth & performance','Something else'].map(x=><option key={x}>{x}</option>)}</select></label><label className="full">TELL US A LITTLE ABOUT IT<textarea value={form.message} onChange={e=>setForm({...form,message:e.target.value})} required minLength={10} placeholder="The opportunity, the challenge, the ambition…"/></label></div>{error&&<p className="error">{error}</p>}<button className="send" disabled={busy}>{busy?'SENDING…':'SEND YOUR BRIEF'} <ArrowUpRight/></button></form>}</div>
+        </div>
+      </section>
+    </main>
+    <footer className="footer"><div className="footer-top"><a className="footer-logo" href="#top">ZERO ONE<sup>®</sup></a><span>FROM 0 TO 1. AND EVERY MOVE AFTER.</span><a href="#top">BACK TO TOP ↑</a></div><div className="footer-big">MAKE<br/><em>THE NEXT.</em></div><div className="footer-bottom"><span>© ZERO ONE 2026. ALL RIGHTS RESERVED.</span><span>CAIRO / WORKING EVERYWHERE.</span><span>STRATEGY · IDENTITY · EXPERIENCE · GROWTH</span></div></footer>
+  </div>;
 }
+
+function ArrowDownRightIcon(){return <ArrowRight size={15}/>;}
 createRoot(document.getElementById('root')).render(<React.StrictMode><App/></React.StrictMode>);
